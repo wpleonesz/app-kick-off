@@ -1,77 +1,121 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
   IonList,
   IonItem,
-  IonLabel,
   IonInput,
   IonButton,
   IonText,
+  IonSpinner,
 } from "@ionic/react";
-import { login as authLogin } from "../services/auth";
+import { authService } from "../services/auth.service";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setError(null);
+    setIsLoading(true);
+
     try {
-      await authLogin(email, password);
-      navigate("/home");
+      console.log("Iniciando login...");
+      const result = await authService.signin({ username, password });
+      console.log("Login exitoso:", result);
+      window.location.href = "/tabs/inicio";
     } catch (err: any) {
+      console.error("Error en login:", err);
       setError(err?.message || "Error en autenticación");
+      setIsLoading(false);
     }
   };
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Iniciar sesión</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen>
-        <form onSubmit={handleSubmit}>
-          <IonList>
-            <IonItem>
-              <IonLabel position="stacked">Correo</IonLabel>
-              <IonInput
-                value={email}
-                onIonInput={(e: any) => setEmail(e.target.value)}
-                type="email"
-                required
-              />
-            </IonItem>
-            <IonItem>
-              <IonLabel position="stacked">Contraseña</IonLabel>
-              <IonInput
-                value={password}
-                onIonInput={(e: any) => setPassword(e.target.value)}
-                type="password"
-                required
-              />
-            </IonItem>
-          </IonList>
-          {error && (
-            <IonText color="danger">
-              <p style={{ padding: 12 }}>{error}</p>
-            </IonText>
-          )}
-          <div style={{ padding: 12 }}>
-            <IonButton type="submit" expand="block">
-              Entrar
-            </IonButton>
+      <IonContent fullscreen className="ion-padding">
+        <div className="auth-container">
+          <div className="text-center mb-xl">
+            <h1>Bienvenido</h1>
+            <p style={{ color: "var(--ion-color-medium)" }}>
+              Ingresa tus credenciales para continuar
+            </p>
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit}>
+            <IonList lines="none" className="mb-md">
+              <IonItem lines="none" className="mb-sm">
+                <IonInput
+                  label="Usuario"
+                  labelPlacement="stacked"
+                  value={username}
+                  onIonInput={(e: any) => setUsername(e.target.value)}
+                  type="text"
+                  required
+                  placeholder="Ingresa tu usuario"
+                  autocomplete="username"
+                  style={{
+                    "--background": "var(--ion-color-light)",
+                    "--border-radius": "12px",
+                    "--padding-start": "16px",
+                    "--padding-end": "16px",
+                  }}
+                />
+              </IonItem>
+
+              <IonItem lines="none" className="mb-md">
+                <IonInput
+                  label="Contraseña"
+                  labelPlacement="stacked"
+                  value={password}
+                  onIonInput={(e: any) => setPassword(e.target.value)}
+                  type="password"
+                  required
+                  placeholder="Ingresa tu contraseña"
+                  autocomplete="current-password"
+                  style={{
+                    "--background": "var(--ion-color-light)",
+                    "--border-radius": "12px",
+                    "--padding-start": "16px",
+                    "--padding-end": "16px",
+                  }}
+                />
+              </IonItem>
+            </IonList>
+
+            {error && (
+              <div className="error-message mb-md">
+                {error}
+              </div>
+            )}
+
+            <IonButton
+              type="submit"
+              expand="block"
+              disabled={isLoading}
+              className="button-large mb-sm"
+            >
+              {isLoading ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                "Iniciar Sesión"
+              )}
+            </IonButton>
+
+            <IonButton
+              expand="block"
+              fill="outline"
+              routerLink="/register"
+              disabled={isLoading}
+              className="button-large"
+            >
+              Crear Cuenta
+            </IonButton>
+          </form>
+        </div>
       </IonContent>
     </IonPage>
   );

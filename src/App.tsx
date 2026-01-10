@@ -1,61 +1,106 @@
-import React from 'react'
-import { IonApp, IonRouterOutlet, IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton } from '@ionic/react'
-import { IonReactRouter } from '@ionic/react-router'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
-import Home from './pages/Home'
-import { isAuthenticated } from './services/auth'
-import { Capacitor } from '@capacitor/core'
-
-const PrivateRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
-  return isAuthenticated() ? children : <Navigate to="/login" replace />
-}
-
-const NotSupportedWeb: React.FC = () => {
-  return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Solo móvil</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent className="ion-padding">
-        <p>Esta aplicación está diseñada solo para dispositivos móviles. Descarga la app nativa o ejecútala en un emulador.</p>
-        <p>Si necesitas abrir en web para desarrollo, usa `npm run dev` localmente con `API_BASE` configurado.</p>
-        <IonButton onClick={() => { window.location.reload() }}>Actualizar</IonButton>
-      </IonContent>
-    </IonPage>
-  )
-}
+import React, { useEffect, useState } from "react";
+import {
+  IonApp,
+  IonRouterOutlet,
+  IonPage,
+  IonContent,
+  IonSpinner,
+  IonTabs,
+  IonTabBar,
+  IonTabButton,
+  IonIcon,
+  IonLabel,
+} from "@ionic/react";
+import { IonReactRouter } from "@ionic/react-router";
+import { Route, Redirect } from "react-router";
+import { home, person } from "ionicons/icons";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import { authService } from "./services/auth.service";
+import { initStorage } from "./storage";
 
 const App: React.FC = () => {
-  const platform = Capacitor.getPlatform()
-  const isWeb = platform === 'web'
+  const [isReady, setIsReady] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  if (isWeb) {
+  // Inicializar storage y verificar autenticación
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        await initStorage();
+        // Verificar autenticación usando Preferences (async)
+        const authenticated = await authService.isAuthenticatedAsync();
+        console.log("Auth check:", authenticated);
+        setIsAuthenticated(authenticated);
+        setIsReady(true);
+      } catch (error) {
+        console.error("Error inicializando:", error);
+        setIsReady(true);
+      }
+    };
+    initialize();
+  }, []);
+
+  // Mostrar spinner mientras se inicializa
+  if (!isReady) {
     return (
       <IonApp>
-        <NotSupportedWeb />
+        <IonPage>
+          <IonContent className="ion-padding ion-text-center">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+              }}
+            >
+              <IonSpinner name="crescent" />
+            </div>
+          </IonContent>
+        </IonPage>
       </IonApp>
-    )
+    );
   }
 
   return (
     <IonApp>
       <IonReactRouter>
         <IonRouterOutlet>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
-            <Route path="/" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </IonRouterOutlet>
-      </IonReactRouter>
-    </IonApp>
-  )
-}
-
-export default App
+          <Route exact path="/login">
+            {isAuthenticated ? <Redirect to="/tabs/inicio" /> : <Login />}
+          </Route>
+          <Route exact path="/register" component={Register} />
+          <Route path="/tabs">
+            {!isAuthenticated ? (
+              <Redirect to="/login" />
+            ) : (
+              <IonTabs>
+                <IonRouterOutlet>
+                  <Route exact path="/tabs/inicio" component={Home} />
+                  <Route exact path="/tabs/perfil" component={Profile} />
+                  <Route exact path="/tabs">
+                    <Redirect to="/tabs/inicio" />
+                  </Route>
+                </IonRouterOutlet>
+                <IonTabBar slot="bottom">
+                  <IonTabButton tab="inicio" href="/tabs/inicio">
+                    <IonIcon icon={home} />
+                    <IonLabel>Inicio</IonLabel>
+                  </IonTabButton>
+                  <IonTabButton tab="perfil" href="/tabs/perfil">
+                    <IonIcon icon={person} />
+                    <IonLabel>Perfil</IonLabel>
+                  </IonTabButton>
+                </IonTabBar>
+              </IonTabs>
+            )}
+          </Route>
+          <Route exact path="/">
+            <Redirect to={isAuthenticated ? "/tabs/inicio" : "/login"} />
+          </Route>
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>

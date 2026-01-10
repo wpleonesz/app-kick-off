@@ -1,33 +1,125 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
-  IonButton,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonList,
+  IonItem,
+  IonLabel,
 } from "@ionic/react";
-import { logout } from "../services/auth";
-import { useNavigate } from "react-router-dom";
+import { authService } from "../services/auth.service";
 
 const Home: React.FC = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const userData = authService.getCurrentUser();
+      if (userData) {
+        setUser(userData);
+      } else {
+        const storedUser = await authService.getCurrentUserFromStorage();
+        if (storedUser) {
+          setUser(storedUser);
+        }
+      }
+    };
+    loadUser();
+  }, []);
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Home</IonTitle>
+          <IonTitle>Inicio</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding">
-        <h2>Bienvenido</h2>
-        <p>Esta es una página protegida ejemplo.</p>
-        <IonButton onClick={handleLogout}>Cerrar sesión</IonButton>
+      <IonContent fullscreen>
+        <IonHeader collapse="condense">
+          <IonToolbar>
+            <IonTitle size="large">Inicio</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+
+        <div className="page-container">
+          {user && (
+            <>
+              <div className="text-center mt-lg mb-lg">
+                <h2>Hola, {user.name || user.username} 👋</h2>
+                <p
+                  style={{
+                    color: "var(--ion-color-medium)",
+                    margin: "8px 0 0 0",
+                  }}
+                >
+                  Bienvenido a tu espacio personal
+                </p>
+              </div>
+
+              <IonCard style={{ margin: "0 0 16px 0" }}>
+                <IonCardHeader>
+                  <IonCardTitle>Información Personal</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <IonList lines="none">
+                    {user.name && (
+                      <IonItem>
+                        <IonLabel>
+                          <h3
+                            style={{ fontWeight: 600, marginBottom: "4px" }}
+                          >
+                            Nombre Completo
+                          </h3>
+                          <p>{user.name}</p>
+                        </IonLabel>
+                      </IonItem>
+                    )}
+                    <IonItem>
+                      <IonLabel>
+                        <h3 style={{ fontWeight: 600, marginBottom: "4px" }}>
+                          Usuario
+                        </h3>
+                        <p>{user.username}</p>
+                      </IonLabel>
+                    </IonItem>
+                    {user.email && (
+                      <IonItem>
+                        <IonLabel>
+                          <h3
+                            style={{ fontWeight: 600, marginBottom: "4px" }}
+                          >
+                            Email
+                          </h3>
+                          <p>{user.email}</p>
+                        </IonLabel>
+                      </IonItem>
+                    )}
+                    {user.role && (
+                      <IonItem>
+                        <IonLabel>
+                          <h3
+                            style={{ fontWeight: 600, marginBottom: "4px" }}
+                          >
+                            Rol
+                          </h3>
+                          <p style={{ textTransform: "capitalize" }}>
+                            {user.role}
+                          </p>
+                        </IonLabel>
+                      </IonItem>
+                    )}
+                  </IonList>
+                </IonCardContent>
+              </IonCard>
+            </>
+          )}
+        </div>
       </IonContent>
     </IonPage>
   );
