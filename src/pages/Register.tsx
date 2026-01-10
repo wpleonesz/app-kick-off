@@ -83,8 +83,16 @@ const Register: React.FC = () => {
           <IonTitle>Registrarse</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding">
-        <div className="page-container">
+      <IonContent fullscreen>
+        <div
+          style={{
+            maxWidth: "400px",
+            margin: "0 auto",
+            padding: "20px",
+            paddingTop: "max(20px, env(safe-area-inset-top))",
+            paddingBottom: "max(20px, env(safe-area-inset-bottom))",
+          }}
+        >
           <form onSubmit={handleSubmit}>
             <IonList lines="none" className="mb-md">
               <IonItem lines="none" className="mb-sm">

@@ -66,7 +66,10 @@ const Profile: React.FC = () => {
 
         {user && (
           <>
-            <div className="profile-header mt-lg">
+            <div
+              className="profile-header"
+              style={{ marginTop: "32px", marginBottom: "24px" }}
+            >
               <IonAvatar
                 style={{
                   width: 100,
@@ -87,7 +90,14 @@ const Profile: React.FC = () => {
               <div className="profile-email">{user.email}</div>
             </div>
 
-            <div className="page-container">
+            <div
+              style={{
+                maxWidth: "600px",
+                margin: "0 auto",
+                padding: "0 20px 20px",
+                paddingBottom: "max(20px, env(safe-area-inset-bottom))",
+              }}
+            >
               <IonCard style={{ margin: "0 0 16px 0" }}>
                 <IonCardHeader>
                   <IonCardTitle>Información de la Cuenta</IonCardTitle>

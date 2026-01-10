@@ -47,7 +47,14 @@ const Home: React.FC = () => {
           </IonToolbar>
         </IonHeader>
 
-        <div className="page-container">
+        <div
+          style={{
+            maxWidth: "600px",
+            margin: "0 auto",
+            padding: "20px",
+            paddingBottom: "max(20px, env(safe-area-inset-bottom))",
+          }}
+        >
           {user && (
             <>
               <div className="text-center mt-lg mb-lg">

@@ -10,16 +10,24 @@
 
 /* Ajustes para safe area (isla dinámica, notch, etc.) */
 ion-header {
-  padding-top: var(--app-safe-area-top);
+  padding-top: env(safe-area-inset-top);
 }
 
 ion-content {
-  --padding-top: var(--app-safe-area-top);
-  --padding-bottom: var(--app-safe-area-bottom);
+  --padding-top: calc(env(safe-area-inset-top) + 8px);
+  --padding-bottom: env(safe-area-inset-bottom);
 }
 
 ion-tab-bar {
-  padding-bottom: var(--app-safe-area-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+  height: auto;
+  min-height: calc(56px + env(safe-area-inset-bottom));
+}
+
+/* Asegurar que el toolbar tenga suficiente espacio */
+ion-toolbar {
+  padding-top: env(safe-area-inset-top);
+  --min-height: calc(56px + env(safe-area-inset-top));
 }
 
 /* Tipografía consistente */
@@ -145,17 +153,27 @@ ion-title {
 ion-tab-bar {
   --background: var(--ion-background-color);
   border-top: 1px solid var(--ion-color-light-shade);
-  height: calc(56px + var(--app-safe-area-bottom));
+  height: auto;
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 56px;
 }
 
 ion-tab-button {
   --color: var(--ion-color-medium);
   --color-selected: var(--ion-color-primary);
-  font-size: var(--app-font-size-xs);
+  font-size: 12px;
+  padding-top: 8px;
+  padding-bottom: 4px;
 }
 
 ion-tab-button ion-icon {
-  font-size: 24px;
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+ion-tab-button ion-label {
+  font-size: 11px !important;
+  margin-top: 2px;
 }
 
 /* Contenedores de página */
@@ -297,10 +315,12 @@ ion-tab-button ion-icon {
 
 /* Ajustes específicos para iPhone con isla dinámica */
 @supports (padding-top: env(safe-area-inset-top)) {
-  ion-header::after {
-    content: "";
-    display: block;
-    height: env(safe-area-inset-top);
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  ion-app {
+    padding-top: env(safe-area-inset-top);
   }
 }
 
@@ -309,5 +329,38 @@ ion-tab-button ion-icon {
   ion-input,
   ion-textarea {
     font-size: 16px !important; /* Evita zoom en iOS */
+  }
+
+  /* Mejorar contraste en modo claro */
+  ion-input {
+    --placeholder-opacity: 0.6;
+  }
+
+  /* Asegurar que el contenido no quede detrás de la isla dinámica */
+  ion-content {
+    --offset-top: env(safe-area-inset-top) !important;
+  }
+}
+
+/* Ajustes específicos para iPhone 16/17 */
+@media only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) {
+  /* iPhone 16 Pro / 15 Pro */
+  ion-toolbar {
+    --min-height: calc(56px + 59px); /* 59px es el espacio de Dynamic Island */
+  }
+
+  ion-content {
+    --padding-top: 59px;
+  }
+}
+
+@media only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+  /* iPhone 16 Pro Max / 15 Pro Max */
+  ion-toolbar {
+    --min-height: calc(56px + 59px);
+  }
+
+  ion-content {
+    --padding-top: 59px;
   }
 }
