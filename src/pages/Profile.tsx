@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   IonPage,
   IonHeader,
@@ -14,26 +14,25 @@ import {
   IonLabel,
   IonAvatar,
   IonList,
+  IonSpinner,
+  IonRefresher,
+  IonRefresherContent,
 } from "@ionic/react";
+import { RefresherEventDetail } from "@ionic/core";
 import { authService } from "../services/auth.service";
+import { useProfile, useRefreshData } from "../hooks/useRealtimeData";
 
 const Profile: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  // Hook para datos en tiempo real - se actualiza automáticamente cada 30 segundos
+  // y cuando la app vuelve al primer plano
+  const { data: user, isLoading, isError, error } = useProfile();
+  const { refreshProfile } = useRefreshData();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const userData = authService.getCurrentUser();
-      if (userData) {
-        setUser(userData);
-      } else {
-        const storedUser = await authService.getCurrentUserFromStorage();
-        if (storedUser) {
-          setUser(storedUser);
-        }
-      }
-    };
-    loadUser();
-  }, []);
+  // Pull-to-refresh para actualización manual
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await refreshProfile();
+    event.detail.complete();
+  };
 
   const handleLogout = async () => {
     await authService.signout();
@@ -58,13 +57,59 @@ const Profile: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
+        {/* Pull-to-refresh para actualización manual */}
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            pullingText="Desliza para actualizar"
+            refreshingSpinner="crescent"
+            refreshingText="Actualizando..."
+          />
+        </IonRefresher>
+
         <IonHeader collapse="condense">
           <IonToolbar>
             <IonTitle size="large">Perfil</IonTitle>
           </IonToolbar>
         </IonHeader>
 
-        {user && (
+        {/* Estado de carga */}
+        {isLoading && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "50vh",
+            }}
+          >
+            <IonSpinner name="crescent" />
+          </div>
+        )}
+
+        {/* Estado de error */}
+        {isError && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "50vh",
+              padding: "20px",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ color: "var(--ion-color-danger)", marginBottom: "16px" }}>
+              Error al cargar el perfil: {error?.message}
+            </p>
+            <IonButton onClick={() => refreshProfile()}>
+              Reintentar
+            </IonButton>
+          </div>
+        )}
+
+        {/* Datos del usuario */}
+        {user && !isLoading && (
           <>
             <div
               className="profile-header"

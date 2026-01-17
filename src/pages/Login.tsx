@@ -2,16 +2,23 @@ import React, { useState } from "react";
 import {
   IonPage,
   IonContent,
-  IonList,
-  IonItem,
   IonInput,
   IonButton,
-  IonText,
   IonSpinner,
 } from "@ionic/react";
 import { authService } from "../services/auth.service";
+import { IonRefresher, IonRefresherContent } from "@ionic/react";
+import { RefresherEventDetail } from "@ionic/core";
+import { useRefreshData } from "../hooks/useRealtimeData";
 
 const Login: React.FC = () => {
+  const { refreshProfile } = useRefreshData();
+
+  // Pull-to-refresh para refrescar datos globales (por ejemplo, perfil)
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await refreshProfile();
+    event.detail.complete();
+  };
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +44,12 @@ const Login: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-padding">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            pullingText="Desliza para refrescar"
+            refreshingSpinner="circles"
+          />
+        </IonRefresher>
         <div
           style={{
             display: "flex",
@@ -72,23 +85,28 @@ const Login: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <IonList lines="none" style={{ marginBottom: "20px" }}>
-              <IonItem
-                lines="none"
-                style={{
-                  marginBottom: "16px",
-                  "--background": "transparent",
-                }}
-              >
+            <div style={{ marginBottom: "24px" }}>
+              {/* Input Usuario - estilo Facebook */}
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "var(--ion-color-dark)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Usuario
+                </label>
                 <IonInput
-                  label="Usuario"
-                  labelPlacement="stacked"
                   value={username}
                   onIonInput={(e: any) => setUsername(e.target.value)}
                   type="text"
                   required
                   placeholder="Ingresa tu usuario"
                   autocomplete="username"
+                  fill="solid"
                   style={{
                     "--background": "var(--ion-color-light)",
                     "--border-radius": "12px",
@@ -96,27 +114,33 @@ const Login: React.FC = () => {
                     "--padding-end": "16px",
                     "--padding-top": "14px",
                     "--padding-bottom": "14px",
+                    "--highlight-color-focused": "#1877f2",
                     fontSize: "16px",
                   }}
                 />
-              </IonItem>
+              </div>
 
-              <IonItem
-                lines="none"
-                style={{
-                  marginBottom: "24px",
-                  "--background": "transparent",
-                }}
-              >
+              {/* Input Contraseña - estilo Facebook */}
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "var(--ion-color-dark)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Contraseña
+                </label>
                 <IonInput
-                  label="Contraseña"
-                  labelPlacement="stacked"
                   value={password}
                   onIonInput={(e: any) => setPassword(e.target.value)}
                   type="password"
                   required
                   placeholder="Ingresa tu contraseña"
                   autocomplete="current-password"
+                  fill="solid"
                   style={{
                     "--background": "var(--ion-color-light)",
                     "--border-radius": "12px",
@@ -124,11 +148,12 @@ const Login: React.FC = () => {
                     "--padding-end": "16px",
                     "--padding-top": "14px",
                     "--padding-bottom": "14px",
+                    "--highlight-color-focused": "#1877f2",
                     fontSize: "16px",
                   }}
                 />
-              </IonItem>
-            </IonList>
+              </div>
+            </div>
 
             {error && (
               <div
@@ -153,6 +178,9 @@ const Login: React.FC = () => {
                 fontWeight: 600,
                 marginBottom: "12px",
                 "--border-radius": "12px",
+                "--background": "#1877f2",
+                "--background-hover": "#166fe5",
+                "--background-activated": "#1565d8",
               }}
             >
               {isLoading ? <IonSpinner name="crescent" /> : "Iniciar Sesión"}
@@ -168,6 +196,8 @@ const Login: React.FC = () => {
                 fontSize: "17px",
                 fontWeight: 600,
                 "--border-radius": "12px",
+                "--border-color": "#1877f2",
+                "--color": "#1877f2",
               }}
             >
               Crear Cuenta

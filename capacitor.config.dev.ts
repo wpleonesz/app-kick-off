@@ -1,23 +1,24 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
+// Configuración para DESARROLLO con Live Reload
+// Usa: CAPACITOR_CONFIG=capacitor.config.dev.ts npx cap run android
+
 const config: CapacitorConfig = {
   appId: 'com.example.appkickoff',
   appName: 'App Kick Off',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
-    // Descomenta para desarrollo local con hot reload
-    // url: 'http://10.0.2.2:3000', // Android emulator
-    // cleartext: true
+    // Apunta al servidor de desarrollo de Vite
+    // Cambia esta IP por la de tu máquina (usa: ipconfig getifaddr en0)
+    url: 'http://192.168.1.6:3000',
+    cleartext: true,
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 500,
       launchAutoHide: true,
-      launchFadeOutDuration: 500,
+      launchFadeOutDuration: 300,
       backgroundColor: '#ffffff',
-      androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
@@ -27,19 +28,11 @@ const config: CapacitorConfig = {
       backgroundColor: '#ffffff',
       overlaysWebView: true,
     },
-    LiveUpdate: {
-      // URL de tu servidor de actualizaciones (configura según tu backend)
-      appId: 'com.example.appkickoff',
-      autoDeleteBundles: true,
-      enabled: true,
-      readyTimeout: 10000,
-      resetOnUpdate: true,
-    },
   },
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: true, // Cambiar a false en producción
+    webContentsDebuggingEnabled: true,
   },
   ios: {
     contentInset: 'always',

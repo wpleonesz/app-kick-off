@@ -6,6 +6,8 @@ import api from "../lib/api";
 import { profileData } from "../storage";
 import { USE_MOCK_FALLBACK } from "../config";
 import { Preferences } from "@capacitor/preferences";
+import { API_BASE } from "../config";
+import queryClient from "../queryClient";
 
 const TOKEN_KEY = "app_kickoff_token";
 const USER_KEY = "app_kickoff_user";
@@ -49,7 +51,7 @@ async function signin(credentials: Credentials): Promise<UserData> {
     const data = await api.post<UserData>(
       "/api/auth/signin",
       credentials,
-      false // No requiere autenticación previa
+      false, // No requiere autenticación previa
     );
 
     // Guardar flag de autenticación (el servidor usa cookies de sesión)
@@ -76,6 +78,14 @@ async function signin(credentials: Credentials): Promise<UserData> {
     await Preferences.set({ key: USER_KEY, value: JSON.stringify(userInfo) });
     await profileData.set(userInfo);
 
+    // Invalidar caché de React Query para que `useProfile` refetch inmediatamente
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
+    } catch (e) {
+      // no bloquear el flujo por fallos de invalidación
+      console.warn("queryClient.invalidateQueries failed", e);
+    }
+
     return userInfo;
   } catch (err) {
     if (USE_MOCK_FALLBACK) {
@@ -92,6 +102,13 @@ async function signin(credentials: Credentials): Promise<UserData> {
       localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
       await profileData.set(mockUser);
 
+      // Invalidar caché en modo mock
+      try {
+        await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      } catch (e) {
+        console.warn("queryClient.invalidateQueries failed (mock)", e);
+      }
+
       return mockUser;
     }
     throw err;
@@ -106,7 +123,7 @@ async function signup(userData: RegisterData): Promise<any> {
     const data = await api.post(
       "/api/auth/signup",
       userData,
-      false // No requiere autenticación
+      false, // No requiere autenticación
     );
     return data;
   } catch (err) {
@@ -219,7 +236,23 @@ export const authService = {
 };
 
 // Exportar funciones individuales para compatibilidad
-export const login = signin;
+// export const login = signin; // Eliminado para evitar duplicidad
 export const register = signup;
 export const logout = signout;
 export { isAuthenticated, getToken, getCurrentUser };
+
+/**
+ * Función de login alternativa usando fetch
+ */
+export async function login(credentials: { email: string; password: string }) {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+  if (!res.ok) throw new Error("Login failed");
+  const data = await res.json();
+  await queryClient.invalidateQueries({ queryKey: ["profile"] });
+  return data;
+}

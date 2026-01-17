@@ -62,7 +62,7 @@ function buildUrl(endpoint: string): string {
 async function handleResponse<T = any>(
   response: HttpResponse,
   method: HttpMethod,
-  url: string
+  url: string,
 ): Promise<T> {
   // Guardar cookie de sesión si el servidor la envía
   if (response.status === 200 || response.status === 201) {
@@ -132,7 +132,7 @@ async function request<T = any>(
   method: HttpMethod,
   endpoint: string,
   body?: any,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
 ): Promise<T> {
   const { headers: extraHeaders = {}, requiresAuth = true } = options;
 
@@ -151,6 +151,7 @@ async function request<T = any>(
   const url = buildUrl(endpoint);
 
   try {
+    console.debug("HTTP request:", { method, url, headers, body });
     const response = await CapacitorHttp.request({
       method,
       url,
@@ -161,8 +162,15 @@ async function request<T = any>(
       },
     });
 
+    console.debug("HTTP response:", {
+      status: response.status,
+      headers: response.headers,
+      data: response.data,
+    });
+
     return handleResponse<T>(response, method, url);
   } catch (error) {
+    console.error("HTTP request error:", error);
     if (error instanceof Error) {
       throw error;
     }

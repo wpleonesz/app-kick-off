@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   IonPage,
   IonHeader,
@@ -12,26 +12,23 @@ import {
   IonList,
   IonItem,
   IonLabel,
+  IonSpinner,
+  IonRefresher,
+  IonRefresherContent,
 } from "@ionic/react";
-import { authService } from "../services/auth.service";
+import { RefresherEventDetail } from "@ionic/core";
+import { useProfile, useRefreshData } from "../hooks/useRealtimeData";
 
 const Home: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  // Hook para datos en tiempo real - se actualiza automáticamente
+  const { data: user, isLoading } = useProfile();
+  const { refreshProfile } = useRefreshData();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const userData = authService.getCurrentUser();
-      if (userData) {
-        setUser(userData);
-      } else {
-        const storedUser = await authService.getCurrentUserFromStorage();
-        if (storedUser) {
-          setUser(storedUser);
-        }
-      }
-    };
-    loadUser();
-  }, []);
+  // Pull-to-refresh para actualización manual
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await refreshProfile();
+    event.detail.complete();
+  };
 
   return (
     <IonPage>
@@ -41,11 +38,34 @@ const Home: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
+        {/* Pull-to-refresh para actualización manual */}
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            pullingText="Desliza para actualizar"
+            refreshingSpinner="crescent"
+            refreshingText="Actualizando..."
+          />
+        </IonRefresher>
+
         <IonHeader collapse="condense">
           <IonToolbar>
             <IonTitle size="large">Inicio</IonTitle>
           </IonToolbar>
         </IonHeader>
+
+        {/* Estado de carga */}
+        {isLoading && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "50vh",
+            }}
+          >
+            <IonSpinner name="crescent" />
+          </div>
+        )}
 
         <div
           style={{
@@ -55,7 +75,7 @@ const Home: React.FC = () => {
             paddingBottom: "max(20px, env(safe-area-inset-bottom))",
           }}
         >
-          {user && (
+          {user && !isLoading && (
             <>
               <div className="text-center mt-lg mb-lg">
                 <h2>Hola, {user.name || user.username} 👋</h2>

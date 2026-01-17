@@ -36,16 +36,95 @@ ion-label {
   line-height: 1.5;
 }
 
+/* ============================================
+   ESTILOS DE INPUT ESTILO FACEBOOK
+   ============================================ */
 ion-input {
-  font-size: var(--app-font-size-base) !important;
+  font-size: 16px !important;
   --padding-start: var(--app-spacing-md);
   --padding-end: var(--app-spacing-md);
 }
 
+/* Input con label stacked - estilo Facebook */
+ion-input.input-label-placement-stacked {
+  --background: var(--ion-color-light);
+  --border-radius: 12px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 24px;
+  --padding-bottom: 8px;
+  --highlight-color-focused: var(--ion-color-primary);
+  min-height: 60px;
+  margin-top: 4px;
+}
+
+/* Label del input - más arriba y separado */
+ion-input.input-label-placement-stacked .label-text-wrapper {
+  margin-bottom: 6px !important;
+  transform: none !important;
+}
+
+ion-input.input-label-placement-stacked .label-text {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--ion-color-dark) !important;
+  transform: none !important;
+}
+
+/* Wrapper del input nativo */
+ion-input.input-label-placement-stacked .native-wrapper {
+  padding-top: 4px;
+}
+
+/* Input nativo - más espacio */
+ion-input.input-label-placement-stacked input.native-input {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  font-size: 16px !important;
+}
+
+/* Container del input con borde */
+ion-input.input-label-placement-stacked .input-wrapper {
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Focus state */
+ion-input.input-label-placement-stacked.has-focus .input-wrapper {
+  border-color: var(--ion-color-primary);
+  background: #fff;
+}
+
+/* Placeholder */
+ion-input.input-label-placement-stacked input::placeholder {
+  color: var(--ion-color-medium);
+  opacity: 0.6;
+}
+
+/* Textarea */
 ion-textarea {
-  font-size: var(--app-font-size-base) !important;
+  font-size: 16px !important;
   --padding-start: var(--app-spacing-md);
   --padding-end: var(--app-spacing-md);
+}
+
+ion-textarea.textarea-label-placement-stacked {
+  --background: var(--ion-color-light);
+  --border-radius: 12px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 24px;
+  --padding-bottom: 8px;
+  margin-top: 4px;
+}
+
+ion-textarea.textarea-label-placement-stacked .label-text {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--ion-color-dark) !important;
+  margin-bottom: 6px !important;
 }
 
 /* Títulos */
@@ -149,31 +228,91 @@ ion-title {
   font-weight: 600;
 }
 
-/* Tab bar */
+/* ============================================
+   TAB BAR ESTILO FACEBOOK
+   ============================================ */
 ion-tab-bar {
-  --background: var(--ion-background-color);
-  border-top: 1px solid var(--ion-color-light-shade);
+  --background: #ffffff;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.1);
   height: auto;
-  padding-bottom: env(safe-area-inset-bottom);
-  min-height: 56px;
+  /* SafeArea: padding inferior para que no quede pegado */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  padding-top: 8px;
+  min-height: 60px;
+  box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* En Android sin SafeArea, asegurar espacio mínimo */
+@supports not (padding: env(safe-area-inset-bottom)) {
+  ion-tab-bar {
+    padding-bottom: 12px;
+  }
 }
 
 ion-tab-button {
-  --color: var(--ion-color-medium);
-  --color-selected: var(--ion-color-primary);
+  --color: #65676b;
+  --color-selected: #1877f2;
+  --ripple-color: transparent;
+  --background-focused: transparent;
   font-size: 12px;
-  padding-top: 8px;
+  padding-top: 4px;
   padding-bottom: 4px;
+  max-width: 120px;
+  position: relative;
+}
+
+/* Indicador superior para tab seleccionado (estilo Facebook) */
+ion-tab-button.tab-selected::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  background: #1877f2;
+  border-radius: 0 0 3px 3px;
 }
 
 ion-tab-button ion-icon {
-  font-size: 26px;
-  margin-bottom: 4px;
+  font-size: 24px;
+  margin-bottom: 2px;
+  transition: transform 0.2s ease;
+}
+
+/* Efecto al presionar */
+ion-tab-button:active ion-icon {
+  transform: scale(0.9);
 }
 
 ion-tab-button ion-label {
-  font-size: 11px !important;
+  font-size: 10px !important;
+  font-weight: 500;
   margin-top: 2px;
+  letter-spacing: 0.2px;
+}
+
+/* Ocultar label en tabs seleccionados (opcional, estilo Facebook) */
+/* ion-tab-button.tab-selected ion-label {
+  font-weight: 600;
+} */
+
+/* Dark mode para tab bar */
+@media (prefers-color-scheme: dark) {
+  ion-tab-bar {
+    --background: #242526;
+    border-top-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  ion-tab-button {
+    --color: #b0b3b8;
+    --color-selected: #2d88ff;
+  }
+
+  ion-tab-button.tab-selected::before {
+    background: #2d88ff;
+  }
 }
 
 /* Contenedores de página */
