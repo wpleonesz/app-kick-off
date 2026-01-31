@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authService } from '../services/auth.service';
-import { API_BASE } from '../config';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { authService } from "../services/auth.service";
+import api from "../lib/api";
+import { API_BASE } from "../config";
 
 // Tipos
 export interface User {
@@ -18,38 +19,16 @@ export interface User {
 
 // Función para hacer fetch con autenticación
 async function fetchWithAuth<T>(endpoint: string): Promise<T> {
-  const token = authService.getToken();
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error ${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
+  // Usar el servicio centralizado `api` que encapsula Capacitor HTTP
+  return api.get<T>(endpoint);
 }
 
 // Función para actualizar datos con autenticación
-async function updateWithAuth<T>(endpoint: string, data: Partial<T>): Promise<T> {
-  const token = authService.getToken();
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error ${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
+async function updateWithAuth<T>(
+  endpoint: string,
+  data: Partial<T>,
+): Promise<T> {
+  return api.put<T>(endpoint, data);
 }
 
 /**
@@ -60,8 +39,8 @@ async function updateWithAuth<T>(endpoint: string, data: Partial<T>): Promise<T>
  */
 export function useProfile() {
   return useQuery({
-    queryKey: ['profile'],
-    queryFn: () => fetchWithAuth<User>('/api/auth/user'),
+    queryKey: ["profile"],
+    queryFn: () => fetchWithAuth<User>("/api/auth/user"),
     staleTime: 1000 * 30, // Datos considerados frescos por 30 segundos
     refetchInterval: 1000 * 30, // Refetch cada 30 segundos
     refetchOnWindowFocus: true, // Refetch cuando la app vuelve al frente
@@ -79,21 +58,26 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<User>) => updateWithAuth<User>('/api/auth/user', data),
+    mutationFn: (data: Partial<User>) =>
+      updateWithAuth<User>("/api/auth/user", data),
 
     // Antes de la mutación: guardar estado anterior y actualizar optimistamente
     onMutate: async (newData) => {
       // Cancelar queries en curso
-      await queryClient.cancelQueries({ queryKey: ['profile'] });
+      await queryClient.cancelQueries({ queryKey: ["profile"] });
 
       // Guardar estado anterior
-      const previousProfile = queryClient.getQueryData<User>(['profile']);
+      const previousProfile = queryClient.getQueryData<User>(["profile"]);
 
       // Actualizar caché optimistamente (inmediatamente en UI)
-      queryClient.setQueryData<User>(['profile'], (old) => ({
-        ...old,
-        ...newData,
-      } as User));
+      queryClient.setQueryData<User>(
+        ["profile"],
+        (old) =>
+          ({
+            ...old,
+            ...newData,
+          }) as User,
+      );
 
       // Retornar contexto para rollback
       return { previousProfile };
@@ -102,13 +86,13 @@ export function useUpdateProfile() {
     // Si hay error, revertir al estado anterior
     onError: (_err, _newData, context) => {
       if (context?.previousProfile) {
-        queryClient.setQueryData(['profile'], context.previousProfile);
+        queryClient.setQueryData(["profile"], context.previousProfile);
       }
     },
 
     // Después de éxito o error, refetch para asegurar sincronización
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 }
@@ -122,7 +106,7 @@ export function useRealtimeList<T>(
   options?: {
     refetchInterval?: number;
     enabled?: boolean;
-  }
+  },
 ) {
   return useQuery({
     queryKey: [key],
@@ -142,8 +126,9 @@ export function useRefreshData() {
   const queryClient = useQueryClient();
 
   return {
-    refreshProfile: () => queryClient.invalidateQueries({ queryKey: ['profile'] }),
+    refreshProfile: () =>
+      queryClient.invalidateQueries({ queryKey: ["profile"] }),
     refreshAll: () => queryClient.invalidateQueries(),
-    refetchProfile: () => queryClient.refetchQueries({ queryKey: ['profile'] }),
+    refetchProfile: () => queryClient.refetchQueries({ queryKey: ["profile"] }),
   };
 }
