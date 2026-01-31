@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "vite dev --host 0.0.0.0 --port 3001",
     "build": "vite build",
     "preview": "vite preview",
     "cap:init": "npx cap init app-kick-off com.example.appkickoff --web-dir=dist || true",
@@ -24,6 +24,7 @@
     "ios:dev": "CAPACITOR_CONFIG=capacitor.config.dev.ts npx cap run ios"
   },
   "dependencies": {
+    "@capacitor-community/http": "^1.4.1",
     "@capacitor/android": "^8.0.0",
     "@capacitor/app": "^8.0.0",
     "@capacitor/core": "^8.0.0",

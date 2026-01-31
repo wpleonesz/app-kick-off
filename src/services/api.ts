@@ -1,5 +1,6 @@
 import { API_BASE } from "../config";
 import { getToken } from "./auth";
+import { Capacitor } from "@capacitor/core";
 
 export interface ApiRequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -12,7 +13,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public message: string,
-    public data?: any
+    public data?: any,
   ) {
     super(message);
     this.name = "ApiError";
@@ -27,14 +28,9 @@ export class ApiError extends Error {
  */
 export async function apiRequest<T = any>(
   endpoint: string,
-  options: ApiRequestOptions = {}
+  options: ApiRequestOptions = {},
 ): Promise<T> {
-  const {
-    method = "GET",
-    body,
-    headers = {},
-    requiresAuth = true,
-  } = options;
+  const { method = "GET", body, headers = {}, requiresAuth = true } = options;
 
   // Construir headers
   const requestHeaders: Record<string, string> = {
@@ -54,6 +50,33 @@ export async function apiRequest<T = any>(
   const url = endpoint.startsWith("http")
     ? endpoint
     : `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
+  // Intentar usar HTTP nativo en dispositivos (evita CORS)
+  if (Capacitor.getPlatform && Capacitor.getPlatform() !== "web") {
+    try {
+      const { Http } = await import("@capacitor-community/http");
+      const nativeOptions: any = {
+        method,
+        url,
+        headers: requestHeaders,
+      };
+      if (body) nativeOptions.data = body;
+
+      const nativeResp = await Http.request(nativeOptions as any);
+      const status = nativeResp.status as number;
+      const data = nativeResp.data as any;
+
+      if (status < 200 || status >= 300) {
+        throw new ApiError(status, data?.message || `Error ${status}`, data);
+      }
+
+      return data as T;
+    } catch (err) {
+      // Si falla el plugin nativo, continuar con fetch como fallback
+      // eslint-disable-next-line no-console
+      console.warn("Native HTTP failed, falling back to fetch", err);
+    }
+  }
 
   try {
     const response = await fetch(url, {
@@ -77,7 +100,7 @@ export async function apiRequest<T = any>(
       throw new ApiError(
         response.status,
         data?.message || `Error ${response.status}: ${response.statusText}`,
-        data
+        data,
       );
     }
 
@@ -90,7 +113,10 @@ export async function apiRequest<T = any>(
 
     // Si es un error de red u otro tipo
     if (error instanceof Error) {
-      throw new ApiError(0, error.message || "Error de conexión con el servidor");
+      throw new ApiError(
+        0,
+        error.message || "Error de conexión con el servidor",
+      );
     }
 
     throw new ApiError(0, "Error desconocido");
