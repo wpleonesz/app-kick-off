@@ -25,6 +25,7 @@ import { home, person } from "ionicons/icons";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { Capacitor } from "@capacitor/core";
+import { Preferences } from "@capacitor/preferences";
 import { App as CapApp } from "@capacitor/app";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Login from "./pages/Login";
@@ -136,6 +137,27 @@ const App: React.FC = () => {
 
         // Inicializar storage
         await initStorage();
+
+        // Sincronizar valores persistentes de Preferences a localStorage
+        try {
+          const auth = await Preferences.get({
+            key: "app_kickoff_authenticated",
+          });
+          const token = await Preferences.get({ key: "app_kickoff_token" });
+          const user = await Preferences.get({ key: "app_kickoff_user" });
+
+          if (auth?.value) {
+            localStorage.setItem("app_kickoff_authenticated", auth.value);
+          }
+          if (token?.value) {
+            localStorage.setItem("app_kickoff_token", token.value);
+          }
+          if (user?.value) {
+            localStorage.setItem("app_kickoff_user", user.value);
+          }
+        } catch (e) {
+          console.warn("Error sincronizando Preferences -> localStorage", e);
+        }
 
         // Verificar autenticación usando Preferences (async)
         const authenticated = await authService.isAuthenticatedAsync();

@@ -1,38 +1,36 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: 'com.example.appkickoff',
-  appName: 'App Kick Off',
-  webDir: 'dist',
-  server: {
-    androidScheme: 'http',
-    // Permite requests HTTP a la API desde el WebView
-    cleartext: true,
-  },
+  appId: "com.example.appkickoff",
+  appName: "App Kick Off",
+  webDir: "dist",
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
       launchFadeOutDuration: 500,
-      backgroundColor: '#ffffff',
-      androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
+      backgroundColor: "#ffffff",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
     },
     StatusBar: {
-      style: 'DARK',
-      backgroundColor: '#ffffff',
+      style: "DARK",
+      backgroundColor: "#ffffff",
       overlaysWebView: true,
     },
     LiveUpdate: {
       // URL de tu servidor de actualizaciones (configura según tu backend)
-      appId: 'com.example.appkickoff',
+      appId: "com.example.appkickoff",
       autoDeleteBundles: true,
       enabled: true,
       readyTimeout: 10000,
       resetOnUpdate: true,
+    },
+    CapacitorHttp: {
+      enabled: true,
     },
   },
   android: {
@@ -41,9 +39,13 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true, // Cambiar a false en producción
   },
   ios: {
-    contentInset: 'always',
+    contentInset: "always",
     allowsLinkPreview: false,
     scrollEnabled: true,
+  },
+  server: {
+    cleartext: true,
+    androidScheme: "https",
   },
 };
 

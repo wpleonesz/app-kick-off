@@ -25,7 +25,7 @@ function resolveApiBase(): string {
     ) {
       const platform = Capacitor.getPlatform();
       if (platform === "android") {
-        return OVERRIDE_ANDROID || "http://localhost:3000";
+        return OVERRIDE_ANDROID || "http://10.0.2.2:3000";
       }
       if (platform === "ios") {
         return OVERRIDE_IOS || "http://localhost:3000";

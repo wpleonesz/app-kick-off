@@ -143,8 +143,10 @@ async function request<T = any>(
     ...extraHeaders,
   };
 
-  // Si requiere autenticación y no hay token, lanzar error
-  if (requiresAuth && !getToken()) {
+  // Si requiere autenticación: aceptar token O cookie de sesión
+  const token = getToken();
+  const hasCookie = !!headers["Cookie"];
+  if (requiresAuth && !token && !hasCookie) {
     throw new Error("No autenticado");
   }
 
