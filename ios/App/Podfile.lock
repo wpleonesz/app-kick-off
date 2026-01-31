@@ -5,8 +5,6 @@ PODS:
   - CapacitorApp (8.0.0):
     - Capacitor
   - CapacitorCordova (8.0.0)
-  - CapacitorNativeSafearea (0.0.4):
-    - Capacitor
   - CapacitorPreferences (8.0.0):
     - Capacitor
   - CapacitorSplashScreen (8.0.0):
@@ -23,7 +21,6 @@ DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
-  - CapacitorNativeSafearea (from `../../node_modules/capacitor-native-safearea`)
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
   - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
@@ -41,8 +38,6 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/app"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
-  CapacitorNativeSafearea:
-    :path: "../../node_modules/capacitor-native-safearea"
   CapacitorPreferences:
     :path: "../../node_modules/@capacitor/preferences"
   CapacitorSplashScreen:
@@ -57,13 +52,12 @@ SPEC CHECKSUMS:
   Capacitor: 341ff7cf652ec695d1a8ebf604db448ac7b6d635
   CapacitorApp: 3963a84197280757b84f126afd1520a85ae3b092
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
-  CapacitorNativeSafearea: 3868011f087f125aee0951723d333c16710d731a
   CapacitorPreferences: 443fabe9670226200e595658a87ef0b1566716d4
   CapacitorSplashScreen: 422880d7117605c30699eb4b21644b62db42e86c
   CapacitorStatusBar: 312e2e67928dfe9514c4a8916a1fd610552f5f35
   CapawesomeCapacitorLiveUpdate: cb597aab760b01967b773e63adc317206b7f9e88
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
-PODFILE CHECKSUM: 63199d92457a16848d04036bf248edf798e4aefb
+PODFILE CHECKSUM: 197d0a090f630ebadcae97b5fd958218f5572bba
 
 COCOAPODS: 1.16.2

@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
-  IonInput,
   IonButton,
   IonButtons,
   IonBackButton,
@@ -15,80 +16,55 @@ import { authService } from "../services/auth.service";
 import { IonRefresher, IonRefresherContent } from "@ionic/react";
 import { RefresherEventDetail } from "@ionic/core";
 import { useRefreshData } from "../hooks/useRealtimeData";
-
-// Estilos compartidos para inputs
-const inputStyle = {
-  "--background": "var(--ion-color-light)",
-  "--border-radius": "12px",
-  "--padding-start": "16px",
-  "--padding-end": "16px",
-  "--padding-top": "14px",
-  "--padding-bottom": "14px",
-  "--highlight-color-focused": "#1877f2",
-  fontSize: "16px",
-};
-
-const labelStyle = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: 600,
-  color: "var(--ion-color-dark)",
-  marginBottom: "8px",
-};
+import { registerSchema, RegisterFormData } from "../schemas/auth.schemas";
+import { FormInput } from "../components/FormInput";
 
 const Register: React.FC = () => {
-    const { refreshProfile } = useRefreshData();
+  const { refreshProfile } = useRefreshData();
 
-    // Pull-to-refresh para refrescar datos globales (por ejemplo, perfil)
-    const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-      await refreshProfile();
-      event.detail.complete();
-    };
-  const [dni, setDni] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [mobile, setMobile] = useState("");
+  // Pull-to-refresh para refrescar datos globales (por ejemplo, perfil)
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await refreshProfile();
+    event.detail.complete();
+  };
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      dni: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      username: "",
+      password: "",
+      confirmPassword: "",
+      mobile: "",
+    },
+  });
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const onSubmit = async (data: RegisterFormData) => {
     setError(null);
     setSuccess(null);
 
-    // Validaciones
-    if (!dni || !firstName || !lastName || !email || !username || !password) {
-      setError("Todos los campos obligatorios deben ser completados");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
-      return;
-    }
-
-    setIsLoading(true);
-
     try {
-      await authService.signup({
-        dni,
-        firstName,
-        lastName,
-        email,
-        username,
-        password,
-        mobile,
-      });
+      const registerData = {
+        dni: data.dni,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        username: data.username,
+        password: data.password,
+        mobile: data.mobile || undefined,
+      };
+
+      await authService.signup(registerData);
 
       setSuccess("Registro exitoso. Redirigiendo...");
       setTimeout(() => {
@@ -96,8 +72,6 @@ const Register: React.FC = () => {
       }, 2000);
     } catch (err: any) {
       setError(err?.message || "Error en el registro");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -112,6 +86,12 @@ const Register: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            pullingText="Desliza para refrescar"
+            refreshingSpinner="circles"
+          />
+        </IonRefresher>
         <div
           style={{
             maxWidth: "400px",
@@ -121,141 +101,97 @@ const Register: React.FC = () => {
             paddingBottom: "max(40px, env(safe-area-inset-bottom))",
           }}
         >
-          <form onSubmit={handleSubmit}>
-            {/* DNI */}
-            <div style={{ marginBottom: "16px" }}>
-              <label style={labelStyle}>
-                DNI <span style={{ color: "#1877f2" }}>*</span>
-              </label>
-              <IonInput
-                value={dni}
-                onIonInput={(e: any) => setDni(e.target.value)}
-                type="text"
-                required
-                placeholder="Ingresa tu DNI"
-                fill="solid"
-                style={inputStyle}
-              />
-            </div>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <FormInput
+              name="dni"
+              control={control}
+              label="DNI"
+              type="text"
+              placeholder="Ingresa tu DNI"
+              required
+              error={errors.dni?.message}
+            />
 
-            {/* Nombre y Apellido en fila */}
             <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>
-                  Nombre <span style={{ color: "#1877f2" }}>*</span>
-                </label>
-                <IonInput
-                  value={firstName}
-                  onIonInput={(e: any) => setFirstName(e.target.value)}
+                <FormInput
+                  name="firstName"
+                  control={control}
+                  label="Nombre"
                   type="text"
-                  required
                   placeholder="Tu nombre"
                   autocomplete="given-name"
-                  fill="solid"
-                  style={inputStyle}
+                  required
+                  error={errors.firstName?.message}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>
-                  Apellido <span style={{ color: "#1877f2" }}>*</span>
-                </label>
-                <IonInput
-                  value={lastName}
-                  onIonInput={(e: any) => setLastName(e.target.value)}
+                <FormInput
+                  name="lastName"
+                  control={control}
+                  label="Apellido"
                   type="text"
-                  required
                   placeholder="Tu apellido"
                   autocomplete="family-name"
-                  fill="solid"
-                  <IonContent fullscreen className="ion-padding">
-                    <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-                      <IonRefresherContent pullingText="Desliza para refrescar" refreshingSpinner="circles" />
-                    </IonRefresher>
+                  required
+                  error={errors.lastName?.message}
                 />
               </div>
             </div>
 
-            {/* Email */}
-            <div style={{ marginBottom: "16px" }}>
-              <label style={labelStyle}>
-                Email <span style={{ color: "#1877f2" }}>*</span>
-              </label>
-              <IonInput
-                value={email}
-                onIonInput={(e: any) => setEmail(e.target.value)}
-                type="email"
-                required
-                placeholder="correo@ejemplo.com"
-                autocomplete="email"
-                fill="solid"
-                style={inputStyle}
-              />
-            </div>
+            <FormInput
+              name="email"
+              control={control}
+              label="Email"
+              type="email"
+              placeholder="correo@ejemplo.com"
+              autocomplete="email"
+              required
+              error={errors.email?.message}
+            />
 
-            {/* Usuario */}
-            <div style={{ marginBottom: "16px" }}>
-              <label style={labelStyle}>
-                Usuario <span style={{ color: "#1877f2" }}>*</span>
-              </label>
-              <IonInput
-                value={username}
-                onIonInput={(e: any) => setUsername(e.target.value)}
-                type="text"
-                required
-                placeholder="Elige un usuario"
-                autocomplete="username"
-                fill="solid"
-                style={inputStyle}
-              />
-            </div>
+            <FormInput
+              name="username"
+              control={control}
+              label="Usuario"
+              type="text"
+              placeholder="Elige un usuario"
+              autocomplete="username"
+              required
+              error={errors.username?.message}
+            />
 
-            {/* Teléfono */}
-            <div style={{ marginBottom: "16px" }}>
-              <label style={labelStyle}>Teléfono</label>
-              <IonInput
-                value={mobile}
-                onIonInput={(e: any) => setMobile(e.target.value)}
-                type="tel"
-                placeholder="0999999999"
-                autocomplete="tel"
-                fill="solid"
-                style={inputStyle}
-              />
-            </div>
+            <FormInput
+              name="mobile"
+              control={control}
+              label="Teléfono"
+              type="tel"
+              placeholder="0999999999"
+              autocomplete="tel"
+              error={errors.mobile?.message}
+            />
 
-            {/* Contraseña */}
-            <div style={{ marginBottom: "16px" }}>
-              <label style={labelStyle}>
-                Contraseña <span style={{ color: "#1877f2" }}>*</span>
-              </label>
-              <IonInput
-                value={password}
-                onIonInput={(e: any) => setPassword(e.target.value)}
-                type="password"
-                required
-                placeholder="Mínimo 6 caracteres"
-                autocomplete="new-password"
-                fill="solid"
-                style={inputStyle}
-              />
-            </div>
+            <FormInput
+              name="password"
+              control={control}
+              label="Contraseña"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              autocomplete="new-password"
+              required
+              error={errors.password?.message}
+            />
 
-            {/* Confirmar Contraseña */}
-            <div style={{ marginBottom: "24px" }}>
-              <label style={labelStyle}>
-                Confirmar Contraseña <span style={{ color: "#1877f2" }}>*</span>
-              </label>
-              <IonInput
-                value={confirmPassword}
-                onIonInput={(e: any) => setConfirmPassword(e.target.value)}
-                type="password"
-                required
-                placeholder="Repite la contraseña"
-                autocomplete="new-password"
-                fill="solid"
-                style={inputStyle}
-              />
-            </div>
+            <FormInput
+              name="confirmPassword"
+              control={control}
+              label="Confirmar Contraseña"
+              type="password"
+              placeholder="Repite la contraseña"
+              autocomplete="new-password"
+              required
+              error={errors.confirmPassword?.message}
+            />
 
             {error && (
               <div
@@ -277,7 +213,7 @@ const Register: React.FC = () => {
             <IonButton
               type="submit"
               expand="block"
-              disabled={isLoading}
+              disabled={isSubmitting}
               style={{
                 height: "52px",
                 fontSize: "17px",
@@ -287,14 +223,14 @@ const Register: React.FC = () => {
                 "--background": "#1877f2",
               }}
             >
-              {isLoading ? <IonSpinner name="crescent" /> : "Crear Cuenta"}
+              {isSubmitting ? <IonSpinner name="crescent" /> : "Crear Cuenta"}
             </IonButton>
 
             <IonButton
               expand="block"
               fill="clear"
               routerLink="/login"
-              disabled={isLoading}
+              disabled={isSubmitting}
               style={{
                 fontSize: "14px",
                 "--color": "#1877f2",

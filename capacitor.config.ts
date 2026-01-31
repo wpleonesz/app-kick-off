@@ -5,10 +5,9 @@ const config: CapacitorConfig = {
   appName: 'App Kick Off',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
-    // Descomenta para desarrollo local con hot reload
-    // url: 'http://10.0.2.2:3000', // Android emulator
-    // cleartext: true
+    androidScheme: 'http',
+    // Permite requests HTTP a la API desde el WebView
+    cleartext: true,
   },
   plugins: {
     SplashScreen: {

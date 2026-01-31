@@ -61,7 +61,7 @@ async function updateWithAuth<T>(endpoint: string, data: Partial<T>): Promise<T>
 export function useProfile() {
   return useQuery({
     queryKey: ['profile'],
-    queryFn: () => fetchWithAuth<User>('/api/auth/profile'),
+    queryFn: () => fetchWithAuth<User>('/api/auth/user'),
     staleTime: 1000 * 30, // Datos considerados frescos por 30 segundos
     refetchInterval: 1000 * 30, // Refetch cada 30 segundos
     refetchOnWindowFocus: true, // Refetch cuando la app vuelve al frente
@@ -79,7 +79,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<User>) => updateWithAuth<User>('/api/auth/profile', data),
+    mutationFn: (data: Partial<User>) => updateWithAuth<User>('/api/auth/user', data),
 
     // Antes de la mutación: guardar estado anterior y actualizar optimistamente
     onMutate: async (newData) => {

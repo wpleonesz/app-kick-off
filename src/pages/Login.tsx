@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   IonPage,
   IonContent,
-  IonInput,
   IonButton,
   IonSpinner,
 } from "@ionic/react";
@@ -10,6 +11,8 @@ import { authService } from "../services/auth.service";
 import { IonRefresher, IonRefresherContent } from "@ionic/react";
 import { RefresherEventDetail } from "@ionic/core";
 import { useRefreshData } from "../hooks/useRealtimeData";
+import { loginSchema, LoginFormData } from "../schemas/auth.schemas";
+import { FormInput } from "../components/FormInput";
 
 const Login: React.FC = () => {
   const { refreshProfile } = useRefreshData();
@@ -19,25 +22,32 @@ const Login: React.FC = () => {
     await refreshProfile();
     event.detail.complete();
   };
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const [error, setError] = useState<string | null>(null);
+
+  const onSubmit = async (data: LoginFormData) => {
     setError(null);
-    setIsLoading(true);
 
     try {
       console.log("Iniciando login...");
-      const result = await authService.signin({ username, password });
+      const result = await authService.signin(data);
       console.log("Login exitoso:", result);
       window.location.href = "/tabs/inicio";
     } catch (err: any) {
       console.error("Error en login:", err);
       setError(err?.message || "Error en autenticación");
-      setIsLoading(false);
     }
   };
 
@@ -84,75 +94,29 @@ const Login: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div style={{ marginBottom: "24px" }}>
-              {/* Input Usuario - estilo Facebook */}
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "var(--ion-color-dark)",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Usuario
-                </label>
-                <IonInput
-                  value={username}
-                  onIonInput={(e: any) => setUsername(e.target.value)}
-                  type="text"
-                  required
-                  placeholder="Ingresa tu usuario"
-                  autocomplete="username"
-                  fill="solid"
-                  style={{
-                    "--background": "var(--ion-color-light)",
-                    "--border-radius": "12px",
-                    "--padding-start": "16px",
-                    "--padding-end": "16px",
-                    "--padding-top": "14px",
-                    "--padding-bottom": "14px",
-                    "--highlight-color-focused": "#1877f2",
-                    fontSize: "16px",
-                  }}
-                />
-              </div>
+              <FormInput
+                name="username"
+                control={control}
+                label="Usuario"
+                type="text"
+                placeholder="Ingresa tu usuario"
+                autocomplete="username"
+                required
+                error={errors.username?.message}
+              />
 
-              {/* Input Contraseña - estilo Facebook */}
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "var(--ion-color-dark)",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Contraseña
-                </label>
-                <IonInput
-                  value={password}
-                  onIonInput={(e: any) => setPassword(e.target.value)}
-                  type="password"
-                  required
-                  placeholder="Ingresa tu contraseña"
-                  autocomplete="current-password"
-                  fill="solid"
-                  style={{
-                    "--background": "var(--ion-color-light)",
-                    "--border-radius": "12px",
-                    "--padding-start": "16px",
-                    "--padding-end": "16px",
-                    "--padding-top": "14px",
-                    "--padding-bottom": "14px",
-                    "--highlight-color-focused": "#1877f2",
-                    fontSize: "16px",
-                  }}
-                />
-              </div>
+              <FormInput
+                name="password"
+                control={control}
+                label="Contraseña"
+                type="password"
+                placeholder="Ingresa tu contraseña"
+                autocomplete="current-password"
+                required
+                error={errors.password?.message}
+              />
             </div>
 
             {error && (
@@ -171,7 +135,7 @@ const Login: React.FC = () => {
             <IonButton
               type="submit"
               expand="block"
-              disabled={isLoading}
+              disabled={isSubmitting}
               style={{
                 height: "52px",
                 fontSize: "17px",
@@ -183,14 +147,14 @@ const Login: React.FC = () => {
                 "--background-activated": "#1565d8",
               }}
             >
-              {isLoading ? <IonSpinner name="crescent" /> : "Iniciar Sesión"}
+              {isSubmitting ? <IonSpinner name="crescent" /> : "Iniciar Sesión"}
             </IonButton>
 
             <IonButton
               expand="block"
               fill="outline"
               routerLink="/register"
-              disabled={isLoading}
+              disabled={isSubmitting}
               style={{
                 height: "52px",
                 fontSize: "17px",

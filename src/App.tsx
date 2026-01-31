@@ -26,7 +26,6 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
-import { CapSafeArea } from "capacitor-native-safearea";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -89,23 +88,10 @@ const App: React.FC = () => {
           // En Android, hacer la barra transparente para SafeArea
           await StatusBar.setBackgroundColor({ color: "#ffffff" });
           await StatusBar.setOverlaysWebView({ overlay: true });
-          try {
-            await CapSafeArea.showTopSafeArea({ color: "#ffffff" });
-            await CapSafeArea.showBottomSafeArea({ color: "#ffffff" });
-          } catch (e) {
-            // no bloquear si el plugin falla
-            console.debug("CapSafeArea plugin not available or failed", e);
-          }
         } else if (platform === "ios") {
           // En iOS también colocar el WebView debajo de la StatusBar
           // para que las variables CSS `env(safe-area-inset-*)` se apliquen.
           await StatusBar.setOverlaysWebView({ overlay: true });
-          try {
-            await CapSafeArea.showTopSafeArea({ color: "#ffffff" });
-            await CapSafeArea.showBottomSafeArea({ color: "#ffffff" });
-          } catch (e) {
-            console.debug("CapSafeArea plugin not available or failed", e);
-          }
         }
       } catch (error) {
         console.error("Error configurando StatusBar:", error);
