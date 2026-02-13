@@ -2,10 +2,14 @@ import { CapacitorHttp, HttpResponse } from "@capacitor/core";
 import { API_BASE } from "../config";
 import { getToken, logout } from "../services/auth";
 import { Preferences } from "@capacitor/preferences";
+import { requestBalancer } from "./request-balancer";
+import { device } from "./device";
+import { sessionGuard } from "../services/session-guard.service";
 
 /**
  * Cliente HTTP centralizado inspirado en sgu-mobile
  * Maneja autenticación, cookies, headers comunes y errores de forma centralizada
+ * Integrado con Request Balancer para caché, deduplicación y control de concurrencia
  */
 
 // Tipos de métodos HTTP soportados
@@ -39,6 +43,14 @@ async function commonHeaders(): Promise<Record<string, string>> {
     }
   } catch (error) {
     console.warn("Error al obtener cookie:", error);
+  }
+
+  // Agregar headers del dispositivo (UUID, platform, app version)
+  try {
+    const deviceHeaders = await device.getHeaders();
+    Object.assign(headers, deviceHeaders);
+  } catch (error) {
+    console.warn("Error al obtener device headers:", error);
   }
 
   return headers;
@@ -134,6 +146,11 @@ async function request<T = any>(
   body?: any,
   options: RequestOptions = {},
 ): Promise<T> {
+  // Verificar que la sesión no se está cerrando
+  if (sessionGuard.isSessionClosing) {
+    throw new Error("Sesión cerrada: cuenta desactivada");
+  }
+
   const { headers: extraHeaders = {}, requiresAuth = true } = options;
 
   // Construir headers
@@ -182,37 +199,93 @@ async function request<T = any>(
 
 /**
  * API pública - métodos de conveniencia
+ * Integrados con Request Balancer para caché, deduplicación y control de concurrencia
  */
 export const api = {
   /**
-   * Realiza una petición GET
+   * Realiza una petición GET con caché automático (30s)
+   * - Deduplicación: si hay 2 requests iguales al mismo tiempo, solo se ejecuta 1
+   * - Caché: resultados se cacheán por 30 segundos
+   * - Cola: máximo 6 requests simultáneos
+   * - Retry: reintentos automáticos en caso de 429, 503, timeouts
    */
-  get: <T = any>(endpoint: string, requiresAuth = true) =>
-    request<T>("GET", endpoint, undefined, { requiresAuth }),
+  get: <T = any>(
+    endpoint: string,
+    requiresAuth = true,
+    ttl = 30_000, // 30 segundos por defecto
+  ): Promise<T> => {
+    const wrappedRequest = () =>
+      request<T>("GET", endpoint, undefined, { requiresAuth });
+    return requestBalancer.get<T>(endpoint, wrappedRequest, ttl);
+  },
 
   /**
-   * Realiza una petición POST
+   * Realiza una petición POST sin caché
+   * - Cola: máximo 6 requests simultáneos
+   * - Retry: reintentos automáticos en caso de 429, 503, timeouts
+   * - Caché: invalida caché relacionado automáticamente
    */
-  post: <T = any>(endpoint: string, body?: any, requiresAuth = true) =>
-    request<T>("POST", endpoint, body, { requiresAuth }),
+  post: <T = any>(
+    endpoint: string,
+    body?: any,
+    requiresAuth = true,
+  ): Promise<T> => {
+    const wrappedRequest = () =>
+      request<T>("POST", endpoint, body, { requiresAuth });
+    return requestBalancer.mutate<T>(endpoint, wrappedRequest);
+  },
 
   /**
-   * Realiza una petición PUT
+   * Realiza una petición PUT sin caché
+   * - Cola: máximo 6 requests simultáneos
+   * - Retry: reintentos automáticos en caso de 429, 503, timeouts
+   * - Caché: invalida caché relacionado automáticamente
    */
-  put: <T = any>(endpoint: string, body?: any, requiresAuth = true) =>
-    request<T>("PUT", endpoint, body, { requiresAuth }),
+  put: <T = any>(
+    endpoint: string,
+    body?: any,
+    requiresAuth = true,
+  ): Promise<T> => {
+    const wrappedRequest = () =>
+      request<T>("PUT", endpoint, body, { requiresAuth });
+    return requestBalancer.mutate<T>(endpoint, wrappedRequest);
+  },
 
   /**
-   * Realiza una petición DELETE
+   * Realiza una petición DELETE sin caché
+   * - Cola: máximo 6 requests simultáneos
+   * - Retry: reintentos automáticos en caso de 429, 503, timeouts
    */
-  delete: <T = any>(endpoint: string, requiresAuth = true) =>
-    request<T>("DELETE", endpoint, undefined, { requiresAuth }),
+  delete: <T = any>(endpoint: string, requiresAuth = true): Promise<T> => {
+    const wrappedRequest = () =>
+      request<T>("DELETE", endpoint, undefined, { requiresAuth });
+    return requestBalancer.mutate<T>(endpoint, wrappedRequest);
+  },
 
   /**
-   * Realiza una petición PATCH
+   * Realiza una petición PATCH sin caché
+   * - Cola: máximo 6 requests simultáneos
+   * - Retry: reintentos automáticos en caso de 429, 503, timeouts
    */
-  patch: <T = any>(endpoint: string, body?: any, requiresAuth = true) =>
-    request<T>("PATCH", endpoint, body, { requiresAuth }),
+  patch: <T = any>(
+    endpoint: string,
+    body?: any,
+    requiresAuth = true,
+  ): Promise<T> => {
+    const wrappedRequest = () =>
+      request<T>("PATCH", endpoint, body, { requiresAuth });
+    return requestBalancer.mutate<T>(endpoint, wrappedRequest);
+  },
+
+  /**
+   * Obtener métricas del balanceador (para debugging)
+   */
+  getMetrics: () => requestBalancer.getMetrics(),
+
+  /**
+   * Limpiar caché (útil al logout)
+   */
+  clearCache: () => requestBalancer.clearCache(),
 };
 
 export default api;
