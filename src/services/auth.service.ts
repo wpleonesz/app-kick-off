@@ -27,6 +27,13 @@ export interface RegisterData {
   username: string;
   password: string;
   mobile?: string;
+  roleId: number;
+}
+
+export interface Role {
+  id: number;
+  code: string;
+  name: string;
 }
 
 export interface UserData {
@@ -35,6 +42,7 @@ export interface UserData {
   email?: string;
   name?: string;
   role?: string;
+  roles?: Role[];
   token?: string;
   dni?: string;
 }
@@ -71,6 +79,7 @@ async function signin(credentials: Credentials): Promise<UserData> {
       email: data.email,
       name: data.name,
       role: data.role,
+      roles: (data as any).roles,
       dni: (data as any).dni,
     };
 

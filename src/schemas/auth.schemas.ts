@@ -106,6 +106,10 @@ export const registerSchema = z
         .optional()
         .or(z.literal("")),
     ),
+    roleId: z
+      .number()
+      .int("El rol debe ser un número entero")
+      .positive("Selecciona un rol"),
     password: z
       .preprocess(
         (v) => (typeof v === "string" ? v.trim() : v),

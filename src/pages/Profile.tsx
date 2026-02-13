@@ -21,12 +21,15 @@ import {
 import { RefresherEventDetail } from "@ionic/core";
 import { authService } from "../services/auth.service";
 import { useProfile, useRefreshData } from "../hooks/useRealtimeData";
+import { useAppToast } from "../hooks/useAppToast";
+import { AppToast } from "../components/common/AppToast";
 
 const Profile: React.FC = () => {
   // Hook para datos en tiempo real - se actualiza automáticamente cada 30 segundos
   // y cuando la app vuelve al primer plano
   const { data: user, isLoading, isError, error } = useProfile();
   const { refreshProfile } = useRefreshData();
+  const { toast, showError, showSuccess, dismissToast } = useAppToast();
 
   // Pull-to-refresh para actualización manual
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
@@ -35,8 +38,15 @@ const Profile: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await authService.signout();
-    window.location.href = "/login";
+    try {
+      await authService.signout();
+      showSuccess("Sesión cerrada correctamente");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
+    } catch (err) {
+      showError(err);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -100,7 +110,7 @@ const Profile: React.FC = () => {
             }}
           >
             <p style={{ color: "var(--ion-color-danger)", marginBottom: "16px" }}>
-              Error al cargar el perfil: {error?.message}
+              Error al cargar el perfil
             </p>
             <IonButton onClick={() => refreshProfile()}>
               Reintentar
@@ -175,7 +185,17 @@ const Profile: React.FC = () => {
                         </IonLabel>
                       </IonItem>
                     )}
-                    {user.role && (
+                    {(user.roles && user.roles.length > 0) && (
+                      <IonItem>
+                        <IonLabel>
+                          <h3 style={{ fontWeight: 600, marginBottom: "4px" }}>
+                            Rol
+                          </h3>
+                          <p>{user.roles[0].name}</p>
+                        </IonLabel>
+                      </IonItem>
+                    )}
+                    {user.role && !user.roles && (
                       <IonItem>
                         <IonLabel>
                           <h3 style={{ fontWeight: 600, marginBottom: "4px" }}>
@@ -202,6 +222,8 @@ const Profile: React.FC = () => {
             </div>
           </>
         )}
+
+        <AppToast toast={toast} onDismiss={dismissToast} />
       </IonContent>
     </IonPage>
   );

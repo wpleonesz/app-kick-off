@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   IonPage,
@@ -11,16 +11,26 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonItem,
+  IonLabel,
+  IonSelect,
+  IonSelectOption,
+  IonText,
 } from "@ionic/react";
 import { authService } from "../services/auth.service";
 import { IonRefresher, IonRefresherContent } from "@ionic/react";
 import { RefresherEventDetail } from "@ionic/core";
 import { useRefreshData } from "../hooks/useRealtimeData";
+import { useRoles } from "../hooks/useRoles";
+import { useAppToast } from "../hooks/useAppToast";
+import { AppToast } from "../components/common/AppToast";
 import { registerSchema, RegisterFormData } from "../schemas/auth.schemas";
 import { FormInput } from "../components/FormInput";
 
 const Register: React.FC = () => {
   const { refreshProfile } = useRefreshData();
+  const { data: roles, isLoading: rolesLoading } = useRoles();
+  const { toast, showError, showSuccess, dismissToast } = useAppToast();
 
   // Pull-to-refresh para refrescar datos globales (por ejemplo, perfil)
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
@@ -28,31 +38,28 @@ const Register: React.FC = () => {
     event.detail.complete();
   };
 
+  const defaultFormValues: RegisterFormData = {
+    dni: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    username: "",
+    password: "",
+    confirmPassword: "",
+    mobile: "",
+    roleId: 0,
+  };
+
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      dni: "",
-      firstName: "",
-      lastName: "",
-      email: "",
-      username: "",
-      password: "",
-      confirmPassword: "",
-      mobile: "",
-    },
+    resolver: zodResolver(registerSchema) as any,
+    defaultValues: defaultFormValues,
   });
 
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
   const onSubmit = async (data: RegisterFormData) => {
-    setError(null);
-    setSuccess(null);
-
     try {
       const registerData = {
         dni: data.dni,
@@ -62,16 +69,17 @@ const Register: React.FC = () => {
         username: data.username,
         password: data.password,
         mobile: data.mobile || undefined,
+        roleId: data.roleId,
       };
 
       await authService.signup(registerData);
 
-      setSuccess("Registro exitoso. Redirigiendo...");
+      showSuccess("Registro exitoso. Redirigiendo...");
       setTimeout(() => {
         window.location.href = "/login";
       }, 2000);
     } catch (err: any) {
-      setError(err?.message || "Error en el registro");
+      showError(err);
     }
   };
 
@@ -171,6 +179,33 @@ const Register: React.FC = () => {
               error={errors.mobile?.message}
             />
 
+            <IonItem>
+              <IonLabel>Rol *</IonLabel>
+              <Controller
+                name="roleId"
+                control={control}
+                render={({ field }) => (
+                  <IonSelect
+                    placeholder="Selecciona tu rol"
+                    value={field.value}
+                    onIonChange={e => field.onChange(e.detail.value)}
+                    disabled={rolesLoading}
+                  >
+                    {roles?.map(role => (
+                      <IonSelectOption key={role.id} value={role.id}>
+                        {role.name}
+                      </IonSelectOption>
+                    ))}
+                  </IonSelect>
+                )}
+              />
+            </IonItem>
+            {errors.roleId && (
+              <IonText color="danger" style={{ display: "block", padding: "0 16px 16px", fontSize: "14px" }}>
+                {errors.roleId.message}
+              </IonText>
+            )}
+
             <FormInput
               name="password"
               control={control}
@@ -192,23 +227,6 @@ const Register: React.FC = () => {
               required
               error={errors.confirmPassword?.message}
             />
-
-            {error && (
-              <div
-                className="error-message"
-                style={{ marginBottom: "16px", padding: "12px 16px", borderRadius: "12px" }}
-              >
-                {error}
-              </div>
-            )}
-            {success && (
-              <div
-                className="success-message"
-                style={{ marginBottom: "16px", padding: "12px 16px", borderRadius: "12px" }}
-              >
-                {success}
-              </div>
-            )}
 
             <IonButton
               type="submit"
@@ -240,6 +258,8 @@ const Register: React.FC = () => {
             </IonButton>
           </form>
         </div>
+
+        <AppToast toast={toast} onDismiss={dismissToast} />
       </IonContent>
     </IonPage>
   );

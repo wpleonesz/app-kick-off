@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -11,11 +11,14 @@ import { authService } from "../services/auth.service";
 import { IonRefresher, IonRefresherContent } from "@ionic/react";
 import { RefresherEventDetail } from "@ionic/core";
 import { useRefreshData } from "../hooks/useRealtimeData";
+import { useAppToast } from "../hooks/useAppToast";
+import { AppToast } from "../components/common/AppToast";
 import { loginSchema, LoginFormData } from "../schemas/auth.schemas";
 import { FormInput } from "../components/FormInput";
 
 const Login: React.FC = () => {
   const { refreshProfile } = useRefreshData();
+  const { toast, showError, dismissToast } = useAppToast();
 
   // Pull-to-refresh para refrescar datos globales (por ejemplo, perfil)
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
@@ -35,11 +38,7 @@ const Login: React.FC = () => {
     },
   });
 
-  const [error, setError] = useState<string | null>(null);
-
   const onSubmit = async (data: LoginFormData) => {
-    setError(null);
-
     try {
       console.log("Iniciando login...");
       const result = await authService.signin(data);
@@ -47,7 +46,7 @@ const Login: React.FC = () => {
       window.location.href = "/tabs/inicio";
     } catch (err: any) {
       console.error("Error en login:", err);
-      setError(err?.message || "Error en autenticación");
+      showError(err);
     }
   };
 
@@ -119,19 +118,6 @@ const Login: React.FC = () => {
               />
             </div>
 
-            {error && (
-              <div
-                className="error-message"
-                style={{
-                  marginBottom: "20px",
-                  padding: "12px 16px",
-                  borderRadius: "12px",
-                }}
-              >
-                {error}
-              </div>
-            )}
-
             <IonButton
               type="submit"
               expand="block"
@@ -168,6 +154,8 @@ const Login: React.FC = () => {
             </IonButton>
           </form>
         </div>
+
+        <AppToast toast={toast} onDismiss={dismissToast} />
       </IonContent>
     </IonPage>
   );
