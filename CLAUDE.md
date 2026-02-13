@@ -18,26 +18,78 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Local Development
 ```bash
 npm run dev              # Start Vite dev server (http://localhost:3001)
-npm run build           # Build web bundle to dist/
+npm run dev:debug        # Start with debug logs enabled
+npm run build            # Build web bundle to dist/
+npm run build:report     # Build and show bundle size
+npm run preview          # Preview build locally (port 4173)
+npm run type-check       # Check TypeScript without compiling
 ```
 
-### Mobile Development
+### Cleanup
 ```bash
-npm run android         # Build web, sync, and run on Android emulator
-npm run android:dev     # Same but with development Capacitor config
-npm run android:open    # Open Android project in Android Studio
-npm run android:build   # Build APK
-npm run android:build:release  # Build release bundle (AAB)
+npm run clean            # Full clean (dist + node_modules)
+npm run clean:dist       # Remove dist/ only
+npm run clean:cache      # Clear Vite cache only
+```
 
-npm run ios            # Build web, sync, and run on iOS simulator
-npm run ios:dev        # Same but with development Capacitor config
-npm run ios:open       # Open iOS project in Xcode
+### Mobile Development - Android
+```bash
+npm run android          # Full: Build web, sync, run on emulator
+npm run android:dev      # Dev mode (cleartext HTTP, debuggable)
+npm run android:sync     # Build and sync only (no run)
+npm run android:sync:only # ⚡ Sync ONLY - fast change iteration (~5 sec)
+npm run android:build    # Build APK
+npm run android:build:release  # Build release bundle (AAB for Play Store)
+npm run android:open     # Open Android Studio
+npm run android:logs     # Stream logcat in real-time
+npm run android:debug    # Open dev menu
+```
+
+### Mobile Development - iOS
+```bash
+npm run ios              # Full: Build web, sync, run on simulator
+npm run ios:dev          # Dev mode (debuggable)
+npm run ios:sync         # Build and sync only (no run)
+npm run ios:sync:only    # ⚡ Sync ONLY - fast change iteration (~5 sec)
+npm run ios:build        # Build for iOS
+npm run ios:open         # Open Xcode
+npm run ios:logs         # Stream logs in real-time
 ```
 
 ### Capacitor Management
 ```bash
-npm run cap:sync       # Sync web build with native projects
-npm run cap:init       # Initialize Capacitor (rarely needed)
+npm run cap:sync         # Sync web build with native projects
+npm run cap:update       # Update native dependencies
+npm run cap:init         # Initialize Capacitor (rarely needed)
+```
+
+### Utilities & Diagnostics
+```bash
+npm run info             # Show Capacitor doctor (versions, setup status)
+npm run info:versions    # Show Node/NPM/Capacitor/TypeScript versions
+npm run help             # Display all available commands
+```
+
+### Quick Start Examples
+```bash
+# Development
+npm run dev                    # Start web dev server
+
+# Android development
+npm run android:dev            # Build, sync, run on emulator
+npm run android:logs           # See real-time logs in separate terminal
+
+# iOS development
+npm run ios:dev                # Build, sync, run on simulator
+npm run ios:logs               # See real-time logs in separate terminal
+
+# Fast iteration (use after changing TypeScript/CSS)
+npm run android:sync:only      # ⚡ ~5 seconds instead of 30
+npm run ios:sync:only          # ⚡ ~5 seconds instead of 30
+
+# Before committing
+npm run type-check             # Verify no TypeScript errors
+npm run build                  # Test production build
 ```
 
 ## Architecture
