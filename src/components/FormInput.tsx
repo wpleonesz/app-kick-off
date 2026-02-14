@@ -1,5 +1,6 @@
 import React from "react";
-import { IonInput } from "@ionic/react";
+import { IonInput, IonItem, IonLabel, IonText, IonNote } from "@ionic/react";
+import type { AutocompleteTypes } from "@ionic/core";
 import { Controller, Control, FieldValues, Path } from "react-hook-form";
 
 interface FormInputProps<T extends FieldValues> {
@@ -9,20 +10,11 @@ interface FormInputProps<T extends FieldValues> {
   type?: "text" | "email" | "password" | "tel";
   placeholder?: string;
   required?: boolean;
-  autocomplete?: string;
+  autocomplete?: AutocompleteTypes;
   error?: string;
   inputStyle?: React.CSSProperties;
   labelStyle?: React.CSSProperties;
 }
-
-/* Facebook-style label: clean, semi-bold, compact */
-const defaultLabelStyle = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: 600,
-  color: "var(--ion-text-color)",
-  marginBottom: "6px",
-} as const;
 
 /* Facebook-style input: subtle background, 8px radius, blue focus */
 const defaultInputStyle = {
@@ -37,13 +29,6 @@ const defaultInputStyle = {
   fontSize: "15px",
 } as React.CSSProperties;
 
-const errorTextStyle = {
-  fontSize: "12px",
-  color: "var(--ion-color-danger)",
-  marginTop: "4px",
-  paddingLeft: "2px",
-} as const;
-
 export function FormInput<T extends FieldValues>({
   name,
   control,
@@ -54,16 +39,23 @@ export function FormInput<T extends FieldValues>({
   autocomplete,
   error,
   inputStyle,
-  labelStyle,
 }: FormInputProps<T>) {
   return (
-    <div style={{ marginBottom: "14px" }}>
-      <label style={labelStyle || defaultLabelStyle}>
-        {label}{" "}
-        {required && (
-          <span style={{ color: "var(--ion-color-primary)" }}>*</span>
-        )}
-      </label>
+    <IonItem
+      lines="none"
+      style={{
+        marginBottom: "14px",
+        "--padding-start": "0",
+        "--inner-padding-end": "0",
+        "--background": "transparent",
+      }}
+    >
+      <IonLabel
+        position="stacked"
+        style={{ fontSize: "13px", fontWeight: 600, marginBottom: "6px" }}
+      >
+        {label} {required && <IonText color="primary">*</IonText>}
+      </IonLabel>
       <Controller
         name={name}
         control={control}
@@ -81,7 +73,15 @@ export function FormInput<T extends FieldValues>({
           />
         )}
       />
-      {error && <div style={errorTextStyle}>{error}</div>}
-    </div>
+      {error && (
+        <IonNote
+          color="danger"
+          slot="helper"
+          style={{ fontSize: "12px", marginTop: "4px", paddingLeft: "2px" }}
+        >
+          {error}
+        </IonNote>
+      )}
+    </IonItem>
   );
 }

@@ -11,6 +11,8 @@ import {
   IonIcon,
   IonLabel,
   IonAlert,
+  IonRow,
+  IonCol,
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { Route, Redirect } from "react-router-dom";
@@ -35,6 +37,7 @@ import { authService } from "./services/auth.service";
 import { initStorage } from "./storage";
 import { updateService } from "./services/update.service";
 import queryClient from "./queryClient";
+import SideMenu from "./components/SideMenu";
 
 // ── Sección de tabs ──────────────────────────────────────────────────────────
 // Usa onIonTabsWillChange (evento nativo de Ionic) para saber qué tab está
@@ -71,13 +74,17 @@ const TabsSection: React.FC = () => {
         </IonTabBar>
       </IonTabs>
 
-      {/* Indicador deslizante de tab activo */}
-      <div className="tab-indicator-track" aria-hidden="true">
-        <div
+      {/* Indicador deslizante de tab activo – fixed al fondo */}
+      <IonRow
+        className="tab-indicator-track"
+        aria-hidden="true"
+        style={{ position: "fixed" }}
+      >
+        <IonCol
           className="tab-indicator-thumb"
           style={{ transform: `translateX(${activeIndex * 100}%)` }}
         />
-      </div>
+      </IonRow>
     </>
   );
 };
@@ -237,16 +244,12 @@ const App: React.FC = () => {
       <IonApp>
         <IonPage>
           <IonContent className="ion-padding ion-text-center">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-              }}
+            <IonRow
+              className="ion-justify-content-center ion-align-items-center"
+              style={{ height: "100%" }}
             >
               <IonSpinner name="crescent" />
-            </div>
+            </IonRow>
           </IonContent>
         </IonPage>
       </IonApp>
@@ -276,7 +279,8 @@ const App: React.FC = () => {
         />
 
         <IonReactRouter>
-          <IonRouterOutlet>
+          <SideMenu />
+          <IonRouterOutlet id="main-content">
             <RouteComp exact path="/login">
               {isAuthenticated ? <RedirectComp to="/tabs/inicio" /> : <Login />}
             </RouteComp>

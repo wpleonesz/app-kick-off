@@ -18,6 +18,12 @@ import {
   IonCardContent,
   IonRefresher,
   IonRefresherContent,
+  IonRow,
+  IonCol,
+  IonText,
+  IonLabel,
+  IonNote,
+  IonItem,
 } from "@ionic/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { authService } from "../services/auth.service";
@@ -120,8 +126,8 @@ const Register: React.FC = () => {
                 error={errors.dni?.message}
               />
 
-              <div style={{ display: "flex", gap: "10px", marginBottom: "0" }}>
-                <div style={{ flex: 1 }}>
+              <IonRow style={{ gap: "10px", marginBottom: "0" }}>
+                <IonCol style={{ padding: 0 }}>
                   <FormInput
                     name="firstName"
                     control={control}
@@ -132,8 +138,8 @@ const Register: React.FC = () => {
                     required
                     error={errors.firstName?.message}
                   />
-                </div>
-                <div style={{ flex: 1 }}>
+                </IonCol>
+                <IonCol style={{ padding: 0 }}>
                   <FormInput
                     name="lastName"
                     control={control}
@@ -144,8 +150,8 @@ const Register: React.FC = () => {
                     required
                     error={errors.lastName?.message}
                   />
-                </div>
-              </div>
+                </IonCol>
+              </IonRow>
 
               <FormInput
                 name="email"
@@ -179,38 +185,39 @@ const Register: React.FC = () => {
                 error={errors.mobile?.message}
               />
 
-              <div style={{ marginBottom: "14px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "var(--ion-text-color)",
-                    marginBottom: "6px",
-                  }}
+              <IonItem
+                lines="none"
+                style={{
+                  marginBottom: "14px",
+                  "--padding-start": "0",
+                  "--inner-padding-end": "0",
+                }}
+              >
+                <IonLabel
+                  position="stacked"
+                  style={{ fontSize: "13px", fontWeight: 600 }}
                 >
-                  Rol{" "}
-                  <span style={{ color: "var(--ion-color-primary)" }}>*</span>
-                </label>
+                  Rol <IonText color="primary">*</IonText>
+                </IonLabel>
                 {rolesLoading ? (
-                  <div
+                  <IonRow
+                    className="ion-align-items-center"
                     style={{
                       background: "var(--ion-color-light)",
                       borderRadius: "8px",
                       padding: "12px 14px",
-                      display: "flex",
-                      alignItems: "center",
                       gap: "8px",
                       color: "var(--ion-color-medium)",
                       fontSize: "15px",
+                      width: "100%",
                     }}
                   >
                     <IonSpinner
                       name="crescent"
                       style={{ width: "18px", height: "18px" }}
                     />
-                    Cargando roles...
-                  </div>
+                    <IonText>Cargando roles...</IonText>
+                  </IonRow>
                 ) : (
                   <Controller
                     name="roleId"
@@ -245,18 +252,19 @@ const Register: React.FC = () => {
                   />
                 )}
                 {errors.roleId && (
-                  <div
+                  <IonNote
+                    color="danger"
                     style={{
                       fontSize: "12px",
-                      color: "var(--ion-color-danger)",
                       marginTop: "4px",
                       paddingLeft: "2px",
+                      display: "block",
                     }}
                   >
                     {errors.roleId.message}
-                  </div>
+                  </IonNote>
                 )}
-              </div>
+              </IonItem>
 
               <FormInput
                 name="password"

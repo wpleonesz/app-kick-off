@@ -339,12 +339,12 @@ ion-content {
   position: fixed;
   left: 0;
   right: 0;
-  pointer-events: none;
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
   bottom: 44px;
   height: 3px;
+  pointer-events: none;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
 }
 
 html.md .tab-indicator-track {
@@ -371,4 +371,160 @@ html.md .tab-indicator-track {
   .tab-indicator-thumb::after {
     background: #2d88ff;
   }
+}
+
+/* ══════════════════════════════════════════════════════════
+   Side-Menu (IonMenu) — Facebook style
+   ══════════════════════════════════════════════════════════ */
+
+/* Menu panel width & background */
+.fb-side-menu {
+  --width: 280px;
+  --background: var(--ion-card-background, #ffffff);
+}
+
+.fb-side-menu ion-content {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+/* ── User profile card at top ── */
+.fb-menu-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.fb-menu-profile:active {
+  background: var(--ion-background-color, #f0f2f5);
+}
+
+.fb-menu-profile-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+  line-height: 1.3;
+}
+
+.fb-menu-profile-role {
+  font-size: 13px;
+  color: var(--ion-color-medium);
+  margin-top: 2px;
+}
+
+/* ── Divider ── */
+.fb-menu-divider {
+  height: 8px;
+  background: var(--ion-background-color, #f0f2f5);
+}
+
+/* ── Menu list ── */
+.fb-menu-list {
+  padding: 4px 0 !important;
+  background: transparent !important;
+}
+
+.fb-menu-list ion-item {
+  --background: transparent;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ion-text-color);
+}
+
+.fb-menu-list ion-item:active {
+  --background: var(--ion-background-color, #f0f2f5);
+}
+
+/* ── Rounded icon wrapper ── */
+.fb-menu-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(24, 119, 242, 0.1);
+  color: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-right: 4px;
+}
+
+/* ── Danger item (Cerrar Sesión) ── */
+.fb-menu-item-danger ion-label {
+  --color: var(--ion-color-danger) !important;
+}
+
+/* ── Footer ── */
+.fb-menu-footer {
+  border-top: 1px solid var(--ion-border-color, #dddfe2);
+  padding: 10px 16px;
+  background: var(--ion-card-background, #ffffff);
+}
+
+.fb-menu-footer-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  font-weight: 500;
+}
+
+/* ── Dark-mode overrides ── */
+@media (prefers-color-scheme: dark) {
+  .fb-side-menu {
+    --background: #242526;
+  }
+  .fb-menu-profile:active {
+    background: #3a3b3c;
+  }
+  .fb-menu-divider {
+    background: #3a3b3c;
+  }
+  .fb-menu-list ion-item:active {
+    --background: #3a3b3c;
+  }
+  .fb-menu-icon-wrapper {
+    background: rgba(45, 136, 255, 0.15);
+    color: #2d88ff;
+  }
+  .fb-menu-footer {
+    border-color: #3e4042;
+    background: #242526;
+  }
+}
+
+body.dark .fb-side-menu {
+  --background: #242526;
+}
+
+body.dark .fb-menu-profile:active {
+  background: #3a3b3c;
+}
+
+body.dark .fb-menu-divider {
+  background: #3a3b3c;
+}
+
+body.dark .fb-menu-list ion-item:active {
+  --background: #3a3b3c;
+}
+
+body.dark .fb-menu-icon-wrapper {
+  background: rgba(45, 136, 255, 0.15);
+  color: #2d88ff;
+}
+
+body.dark .fb-menu-footer {
+  border-color: #3e4042;
+  background: #242526;
 }

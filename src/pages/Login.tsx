@@ -75,20 +75,23 @@ const Login: React.FC = () => {
           <IonRow className="ion-justify-content-center ion-margin-bottom">
             <IonCol size="auto" className="ion-text-center">
               <IonText color="primary">
-                <h1
+                <IonText
                   style={{
                     fontSize: "32px",
                     fontWeight: 700,
                     margin: "0 0 4px 0",
+                    display: "block",
                   }}
                 >
                   Kick Off
-                </h1>
+                </IonText>
               </IonText>
               <IonText color="medium">
-                <p style={{ fontSize: "15px", margin: 0 }}>
+                <IonText
+                  style={{ fontSize: "15px", margin: 0, display: "block" }}
+                >
                   Ingresa tus credenciales para continuar
-                </p>
+                </IonText>
               </IonText>
             </IonCol>
           </IonRow>

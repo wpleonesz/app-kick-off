@@ -1,20 +1,32 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
   IonContent,
   IonButton,
+  IonButtons,
   IonSpinner,
   IonRefresher,
   IonRefresherContent,
   IonIcon,
   IonCard,
   IonCardContent,
-  IonChip,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonList,
+  IonItem,
   IonLabel,
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  useIonActionSheet,
+  IonAvatar,
+  IonText,
+  IonChip,
+  IonNote,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonMenuButton,
   useIonAlert,
 } from "@ionic/react";
 import {
@@ -27,19 +39,9 @@ import {
   refreshOutline,
   atOutline,
   menuOutline,
-  settingsOutline,
-  informationCircleOutline,
-  moonOutline,
-  sunnyOutline,
-  notificationsOutline,
-  bookmarkOutline,
-  helpCircleOutline,
-  closeOutline,
   createOutline,
-  cameraOutline,
 } from "ionicons/icons";
 import { RefresherEventDetail } from "@ionic/core";
-import { Capacitor } from "@capacitor/core";
 import { authService } from "../services/auth.service";
 import { useProfile, useRefreshData } from "../hooks/useRealtimeData";
 import { useAppToast } from "../hooks/useAppToast";
@@ -58,13 +60,7 @@ const Profile: React.FC = () => {
   const { data: user, isLoading, isError } = useProfile();
   const { refreshProfile } = useRefreshData();
   const { toast, showError, showSuccess, dismissToast } = useAppToast();
-  const [presentActionSheet] = useIonActionSheet();
   const [presentAlert] = useIonAlert();
-  const [isDarkMode, setIsDarkMode] = useState(
-    () =>
-      document.body.classList.contains("dark") ||
-      window.matchMedia("(prefers-color-scheme: dark)").matches,
-  );
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await refreshProfile();
@@ -83,81 +79,13 @@ const Profile: React.FC = () => {
     }
   };
 
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    document.body.classList.toggle("dark", newMode);
-    document.documentElement.style.colorScheme = newMode ? "dark" : "light";
-    showSuccess(newMode ? "Modo oscuro activado" : "Modo claro activado");
-  };
-
-  const openMenu = () => {
-    presentActionSheet({
-      header: "Menú",
-      cssClass: "fb-context-menu",
+  const confirmLogout = () => {
+    presentAlert({
+      header: "Cerrar Sesión",
+      message: "¿Estás seguro de que deseas cerrar sesión?",
       buttons: [
-        {
-          text: "Editar Perfil",
-          icon: createOutline,
-          handler: () => {
-            showSuccess("Edición de perfil próximamente");
-          },
-        },
-        {
-          text: "Cambiar Foto",
-          icon: cameraOutline,
-          handler: () => {
-            showSuccess("Cambio de foto próximamente");
-          },
-        },
-        {
-          text: "Notificaciones",
-          icon: notificationsOutline,
-          handler: () => {
-            showSuccess("No tienes notificaciones nuevas");
-          },
-        },
-        {
-          text: isDarkMode ? "Modo Claro" : "Modo Oscuro",
-          icon: isDarkMode ? sunnyOutline : moonOutline,
-          handler: toggleDarkMode,
-        },
-        {
-          text: "Acerca de la App",
-          icon: informationCircleOutline,
-          handler: () => {
-            presentAlert({
-              header: "Kick Off",
-              subHeader: "Versión 0.1.0",
-              message: `Plataforma: ${Capacitor.getPlatform()}\nTu app para organizar partidos de fútbol, torneos y equipos.\n\n© 2026 Kick Off`,
-              buttons: ["Cerrar"],
-            });
-          },
-        },
-        {
-          text: "Cerrar Sesión",
-          icon: logOutOutline,
-          role: "destructive",
-          handler: () => {
-            presentAlert({
-              header: "Cerrar Sesión",
-              message: "¿Estás seguro de que deseas cerrar sesión?",
-              buttons: [
-                { text: "Cancelar", role: "cancel" },
-                {
-                  text: "Cerrar Sesión",
-                  role: "destructive",
-                  handler: handleLogout,
-                },
-              ],
-            });
-          },
-        },
-        {
-          text: "Cancelar",
-          icon: closeOutline,
-          role: "cancel",
-        },
+        { text: "Cancelar", role: "cancel" },
+        { text: "Cerrar Sesión", role: "destructive", handler: handleLogout },
       ],
     });
   };
@@ -183,23 +111,11 @@ const Profile: React.FC = () => {
 
   return (
     <IonPage>
-      {/* ── Facebook-style Header ── */}
-      <IonHeader className="fb-header">
+      <IonHeader>
         <IonToolbar>
-          <div
-            slot="start"
-            style={{
-              paddingLeft: "12px",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <span className="fb-logo-text">Perfil</span>
-          </div>
+          <IonTitle>Perfil</IonTitle>
           <IonButtons slot="end">
-            <IonButton className="fb-header-btn" onClick={openMenu}>
-              <IonIcon icon={menuOutline} />
-            </IonButton>
+            <IonMenuButton autoHide={false} />
           </IonButtons>
         </IonToolbar>
       </IonHeader>
@@ -213,37 +129,29 @@ const Profile: React.FC = () => {
           />
         </IonRefresher>
 
-        {/* Loading */}
+        {/* ── Spinner ── */}
         {isLoading && !user && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "50vh",
-            }}
-          >
-            <IonSpinner name="crescent" />
-          </div>
+          <IonSpinner
+            name="crescent"
+            style={{ display: "block", margin: "40vh auto" }}
+          />
         )}
 
-        {/* Error */}
+        {/* ── Error ── */}
         {isError && !user && (
           <IonCard>
-            <IonCardContent style={{ textAlign: "center", padding: "24px" }}>
-              <p
-                style={{
-                  color: "var(--ion-color-danger)",
-                  marginBottom: "16px",
-                }}
-              >
-                No se pudo cargar el perfil
-              </p>
+            <IonCardContent>
+              <IonText color="danger">
+                <IonCardTitle
+                  style={{ fontSize: "15px", marginBottom: "16px" }}
+                >
+                  No se pudo cargar el perfil
+                </IonCardTitle>
+              </IonText>
               <IonButton
                 expand="block"
                 fill="outline"
                 onClick={() => refreshProfile()}
-                style={{ marginBottom: "8px" }}
               >
                 <IonIcon slot="start" icon={refreshOutline} />
                 Reintentar
@@ -252,7 +160,7 @@ const Profile: React.FC = () => {
                 expand="block"
                 color="danger"
                 fill="clear"
-                onClick={handleLogout}
+                onClick={confirmLogout}
               >
                 <IonIcon slot="start" icon={logOutOutline} />
                 Cerrar Sesión
@@ -261,196 +169,209 @@ const Profile: React.FC = () => {
           </IonCard>
         )}
 
-        {/* Profile Content */}
+        {/* ── Contenido principal ── */}
         {user && (
           <>
-            {/* ── Profile Header Card – Facebook cover style ── */}
+            {/* Tarjeta de cabecera con banner + avatar */}
             <IonCard>
-              <IonCardContent style={{ padding: "0" }}>
-                {/* Cover area */}
-                <div
+              <IonCardHeader
+                style={{
+                  background:
+                    "linear-gradient(135deg, #1877f2 0%, #0d47a1 100%)",
+                  textAlign: "center",
+                  paddingBottom: "20px",
+                }}
+              >
+                <IonAvatar
                   style={{
-                    height: "80px",
-                    background:
-                      "linear-gradient(135deg, var(--ion-color-primary) 0%, #42b72a 100%)",
-                    borderRadius: "var(--fb-radius) var(--fb-radius) 0 0",
-                  }}
-                />
-                {/* Avatar + info */}
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "0 20px 20px",
-                    marginTop: "-40px",
+                    width: 88,
+                    height: 88,
+                    margin: "8px auto 12px",
+                    background: "rgba(255,255,255,0.25)",
+                    border: "3px solid rgba(255,255,255,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  <div
-                    className="fb-avatar"
-                    style={{
-                      margin: "0 auto 12px",
-                      border: "4px solid var(--ion-card-background, #ffffff)",
-                    }}
+                  <IonText
+                    style={{ fontSize: "2rem", fontWeight: 700, color: "#fff" }}
                   >
                     {getInitials(fullName || user.username)}
-                  </div>
-                  <div
+                  </IonText>
+                </IonAvatar>
+
+                <IonCardTitle
+                  style={{
+                    color: "#fff",
+                    fontSize: "20px",
+                    marginBottom: "4px",
+                  }}
+                >
+                  {fullName || user.username}
+                </IonCardTitle>
+                <IonCardSubtitle
+                  style={{ color: "rgba(255,255,255,0.8)", fontSize: "13px" }}
+                >
+                  @{user.username}
+                </IonCardSubtitle>
+
+                {roleName && (
+                  <IonChip
                     style={{
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      color: "var(--ion-text-color)",
-                      marginBottom: "2px",
+                      background: "rgba(255,255,255,0.18)",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.4)",
+                      margin: "12px auto 0",
                     }}
                   >
-                    {fullName || user.username}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "var(--ion-color-medium)",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    @{user.username}
-                  </div>
+                    <IonIcon icon={shieldCheckmarkOutline} />
+                    <IonLabel>{roleName}</IonLabel>
+                  </IonChip>
+                )}
+              </IonCardHeader>
 
-                  {/* Role chip */}
-                  {roleName && (
-                    <IonChip
-                      style={{
-                        background: roleColor.bg,
-                        color: roleColor.text,
-                      }}
-                    >
-                      <IonIcon icon={shieldCheckmarkOutline} />
-                      <IonLabel>{roleName}</IonLabel>
-                    </IonChip>
-                  )}
-
-                  {/* Action buttons */}
-                  <div
-                    style={{ display: "flex", gap: "8px", marginTop: "16px" }}
-                  >
-                    <IonButton
-                      expand="block"
-                      size="small"
-                      style={{ flex: 1 }}
-                      onClick={() =>
-                        showSuccess("Edición de perfil próximamente")
-                      }
-                    >
-                      <IonIcon slot="start" icon={createOutline} />
-                      Editar Perfil
-                    </IonButton>
-                    <IonButton size="small" fill="outline" onClick={openMenu}>
-                      <IonIcon icon={menuOutline} />
-                    </IonButton>
-                  </div>
-                </div>
+              <IonCardContent>
+                <IonGrid style={{ padding: 0 }}>
+                  <IonRow>
+                    <IonCol>
+                      <IonButton
+                        expand="block"
+                        size="small"
+                        onClick={() =>
+                          showSuccess("Edición de perfil próximamente")
+                        }
+                      >
+                        <IonIcon slot="start" icon={createOutline} />
+                        Editar Perfil
+                      </IonButton>
+                    </IonCol>
+                    <IonCol size="auto">
+                      <IonMenuButton autoHide={false} />
+                    </IonCol>
+                  </IonRow>
+                </IonGrid>
               </IonCardContent>
             </IonCard>
 
-            {/* ── Info Card ── */}
+            {/* Tarjeta de información */}
             <IonCard>
-              <IonCardContent style={{ padding: "4px 16px 16px" }}>
-                <div className="fb-card-section-title">
-                  Información de la cuenta
-                </div>
-
-                {/* Full name */}
+              <IonCardHeader>
+                <IonCardSubtitle>Información de la cuenta</IonCardSubtitle>
+              </IonCardHeader>
+              <IonList lines="inset" style={{ background: "transparent" }}>
                 {fullName && (
-                  <div className="fb-info-row">
-                    <IonIcon icon={personOutline} />
-                    <div>
-                      <div className="fb-info-label">Nombre completo</div>
-                      <div className="fb-info-value">{fullName}</div>
-                    </div>
-                  </div>
+                  <IonItem>
+                    <IonIcon
+                      slot="start"
+                      icon={personOutline}
+                      color="primary"
+                    />
+                    <IonLabel>
+                      <IonNote>Nombre completo</IonNote>
+                      <IonText
+                        color="dark"
+                        style={{ display: "block", fontWeight: 600 }}
+                      >
+                        {fullName}
+                      </IonText>
+                    </IonLabel>
+                  </IonItem>
                 )}
 
-                {/* Username */}
-                <div className="fb-info-row">
-                  <IonIcon icon={atOutline} />
-                  <div>
-                    <div className="fb-info-label">Usuario</div>
-                    <div className="fb-info-value">@{user.username}</div>
-                  </div>
-                </div>
+                <IonItem>
+                  <IonIcon slot="start" icon={atOutline} color="primary" />
+                  <IonLabel>
+                    <IonNote>Usuario</IonNote>
+                    <IonText
+                      color="dark"
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      @{user.username}
+                    </IonText>
+                  </IonLabel>
+                </IonItem>
 
-                {/* Email */}
-                <div className="fb-info-row">
-                  <IonIcon icon={mailOutline} />
-                  <div>
-                    <div className="fb-info-label">Correo electrónico</div>
-                    <div className="fb-info-value">
+                <IonItem>
+                  <IonIcon slot="start" icon={mailOutline} color="primary" />
+                  <IonLabel>
+                    <IonNote>Correo electrónico</IonNote>
+                    <IonText
+                      color="dark"
+                      style={{ display: "block", fontWeight: 600 }}
+                    >
                       {email || "No disponible"}
-                    </div>
-                  </div>
-                </div>
+                    </IonText>
+                  </IonLabel>
+                </IonItem>
 
-                {/* DNI */}
                 {dni && (
-                  <div className="fb-info-row">
-                    <IonIcon icon={cardOutline} />
-                    <div>
-                      <div className="fb-info-label">Cédula / DNI</div>
-                      <div className="fb-info-value">{dni}</div>
-                    </div>
-                  </div>
+                  <IonItem>
+                    <IonIcon slot="start" icon={cardOutline} color="primary" />
+                    <IonLabel>
+                      <IonNote>Cédula / DNI</IonNote>
+                      <IonText
+                        color="dark"
+                        style={{ display: "block", fontWeight: 600 }}
+                      >
+                        {dni}
+                      </IonText>
+                    </IonLabel>
+                  </IonItem>
                 )}
 
-                {/* Mobile */}
                 {mobile && (
-                  <div className="fb-info-row">
-                    <IonIcon icon={callOutline} />
-                    <div>
-                      <div className="fb-info-label">Teléfono</div>
-                      <div className="fb-info-value">{mobile}</div>
-                    </div>
-                  </div>
+                  <IonItem>
+                    <IonIcon slot="start" icon={callOutline} color="primary" />
+                    <IonLabel>
+                      <IonNote>Teléfono</IonNote>
+                      <IonText
+                        color="dark"
+                        style={{ display: "block", fontWeight: 600 }}
+                      >
+                        {mobile}
+                      </IonText>
+                    </IonLabel>
+                  </IonItem>
                 )}
 
-                {/* Role */}
                 {roleName && (
-                  <div className="fb-info-row">
-                    <IonIcon icon={shieldCheckmarkOutline} />
-                    <div>
-                      <div className="fb-info-label">Rol</div>
+                  <IonItem lines="none">
+                    <IonIcon
+                      slot="start"
+                      icon={shieldCheckmarkOutline}
+                      color="primary"
+                    />
+                    <IonLabel>
+                      <IonNote>Rol</IonNote>
                       <IonChip
                         style={{
                           background: roleColor.bg,
                           color: roleColor.text,
                           marginTop: "4px",
+                          marginLeft: 0,
                         }}
                       >
-                        {roleName}
+                        <IonLabel>{roleName}</IonLabel>
                       </IonChip>
-                    </div>
-                  </div>
+                    </IonLabel>
+                  </IonItem>
                 )}
-              </IonCardContent>
+              </IonList>
             </IonCard>
 
-            {/* ── Logout Card ── */}
+            {/* Botón de cerrar sesión */}
             <IonCard>
               <IonCardContent style={{ padding: "12px 16px" }}>
                 <IonButton
                   expand="block"
                   color="danger"
                   fill="outline"
-                  onClick={() => {
-                    presentAlert({
-                      header: "Cerrar Sesión",
-                      message: "¿Estás seguro de que deseas cerrar sesión?",
-                      buttons: [
-                        { text: "Cancelar", role: "cancel" },
-                        {
-                          text: "Cerrar Sesión",
-                          role: "destructive",
-                          handler: handleLogout,
-                        },
-                      ],
-                    });
-                  }}
+                  onClick={confirmLogout}
                 >
                   <IonIcon slot="start" icon={logOutOutline} />
                   Cerrar Sesión
