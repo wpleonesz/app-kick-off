@@ -11,7 +11,6 @@ import {
   IonIcon,
   IonLabel,
   IonAlert,
-  setupIonicReact,
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { Route, Redirect } from "react-router-dom";
@@ -22,7 +21,6 @@ import { Route, Redirect } from "react-router-dom";
 const RouteComp: any = Route as any;
 const RedirectComp: any = Redirect as any;
 import { home, homeOutline, person, personOutline } from "ionicons/icons";
-import { useLocation } from "react-router-dom";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { Capacitor } from "@capacitor/core";
@@ -38,76 +36,49 @@ import { initStorage } from "./storage";
 import { updateService } from "./services/update.service";
 import queryClient from "./queryClient";
 
-// Configuración de Ionic React con SafeArea habilitado
-setupIonicReact({
-  mode: "md",
-  swipeBackEnabled: true,
-});
+// ── Sección de tabs ──────────────────────────────────────────────────────────
+// Usa onIonTabsWillChange (evento nativo de Ionic) para saber qué tab está
+// activo y swappear entre íconos filled/outline. El color lo maneja la CSS
+// variable --color-selected del IonTabBar.
+const TABS = ["inicio", "perfil"] as const;
 
-// ── Tab bar con indicador visual de tab activo ──────────────────────────────
-const TABS = [
-  { tab: "inicio", href: "/tabs/inicio", label: "Inicio", icon: homeOutline, activeIcon: home },
-  { tab: "perfil", href: "/tabs/perfil", label: "Perfil", icon: personOutline, activeIcon: person },
-];
-
-const TabBar: React.FC = () => {
-  const location = useLocation();
+const TabsSection: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>("inicio");
+  const activeIndex = Math.max(
+    0,
+    TABS.indexOf(activeTab as (typeof TABS)[number]),
+  );
 
   return (
-    <IonTabBar
-      slot="bottom"
-      style={{
-        "--background": "#ffffff",
-        "--border": "none",
-        boxShadow: "0 -1px 0 rgba(0,0,0,0.08)",
-        height: "60px",
-      } as React.CSSProperties}
-    >
-      {TABS.map(({ tab, href, label, icon, activeIcon }) => {
-        const isActive = location.pathname === href;
-        return (
-          <IonTabButton
-            key={tab}
-            tab={tab}
-            href={href}
-            style={{
-              "--color": "#9e9e9e",
-              "--color-selected": "#1877f2",
-            } as React.CSSProperties}
-          >
-            <IonIcon
-              icon={isActive ? activeIcon : icon}
-              style={{
-                fontSize: "22px",
-                transition: "transform 0.15s ease",
-                transform: isActive ? "scale(1.1)" : "scale(1)",
-              }}
-            />
-            <IonLabel
-              style={{
-                fontSize: "11px",
-                fontWeight: isActive ? 700 : 400,
-                letterSpacing: isActive ? "0.01em" : "normal",
-              }}
-            >
-              {label}
-            </IonLabel>
-            {isActive && (
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "4px",
-                  width: "4px",
-                  height: "4px",
-                  borderRadius: "50%",
-                  background: "#1877f2",
-                }}
-              />
-            )}
+    <>
+      <IonTabs onIonTabsWillChange={(e) => setActiveTab(e.detail.tab)}>
+        <IonRouterOutlet>
+          <RouteComp exact path="/tabs/inicio" component={Home} />
+          <RouteComp exact path="/tabs/perfil" component={Profile} />
+          <RouteComp exact path="/tabs">
+            <RedirectComp to="/tabs/inicio" />
+          </RouteComp>
+        </IonRouterOutlet>
+        <IonTabBar slot="bottom">
+          <IonTabButton tab="inicio" href="/tabs/inicio">
+            <IonIcon icon={activeTab === "inicio" ? home : homeOutline} />
+            <IonLabel>Inicio</IonLabel>
           </IonTabButton>
-        );
-      })}
-    </IonTabBar>
+          <IonTabButton tab="perfil" href="/tabs/perfil">
+            <IonIcon icon={activeTab === "perfil" ? person : personOutline} />
+            <IonLabel>Perfil</IonLabel>
+          </IonTabButton>
+        </IonTabBar>
+      </IonTabs>
+
+      {/* Indicador deslizante de tab activo */}
+      <div className="tab-indicator-track" aria-hidden="true">
+        <div
+          className="tab-indicator-thumb"
+          style={{ transform: `translateX(${activeIndex * 100}%)` }}
+        />
+      </div>
+    </>
   );
 };
 
@@ -132,18 +103,10 @@ const App: React.FC = () => {
   const setupStatusBar = async () => {
     if (Capacitor.isNativePlatform()) {
       try {
-        // Configurar estilo de StatusBar
         await StatusBar.setStyle({ style: Style.Dark });
-
-        const platform = Capacitor.getPlatform();
-        if (platform === "android") {
-          // En Android, hacer la barra transparente para SafeArea
-          await StatusBar.setBackgroundColor({ color: "#ffffff" });
-          await StatusBar.setOverlaysWebView({ overlay: true });
-        } else if (platform === "ios") {
-          // En iOS también colocar el WebView debajo de la StatusBar
-          // para que las variables CSS `env(safe-area-inset-*)` se apliquen.
-          await StatusBar.setOverlaysWebView({ overlay: true });
+        await StatusBar.setOverlaysWebView({ overlay: true });
+        if (Capacitor.getPlatform() === "android") {
+          await StatusBar.setBackgroundColor({ color: "#00000000" });
         }
       } catch (error) {
         console.error("Error configurando StatusBar:", error);
@@ -239,11 +202,14 @@ const App: React.FC = () => {
     initialize();
 
     // Refetch al volver al frente (Capacitor no dispara eventos de foco del browser)
-    const appStateListener = CapApp.addListener("appStateChange", ({ isActive }) => {
-      if (isActive) {
-        queryClient.invalidateQueries();
-      }
-    });
+    const appStateListener = CapApp.addListener(
+      "appStateChange",
+      ({ isActive }) => {
+        if (isActive) {
+          queryClient.invalidateQueries();
+        }
+      },
+    );
 
     // Cleanup listeners
     return () => {
@@ -319,16 +285,7 @@ const App: React.FC = () => {
               {!isAuthenticated ? (
                 <RedirectComp to="/login" />
               ) : (
-                <IonTabs>
-                  <IonRouterOutlet>
-                    <RouteComp exact path="/tabs/inicio" component={Home} />
-                    <RouteComp exact path="/tabs/perfil" component={Profile} />
-                    <RouteComp exact path="/tabs">
-                      <RedirectComp to="/tabs/inicio" />
-                    </RouteComp>
-                  </IonRouterOutlet>
-                  <TabBar />
-                </IonTabs>
+                <TabsSection />
               )}
             </RouteComp>
             <RouteComp exact path="/">

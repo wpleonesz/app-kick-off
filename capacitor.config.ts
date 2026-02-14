@@ -19,7 +19,7 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: "DARK",
       backgroundColor: "#ffffff",
-      overlaysWebView: true,
+      overlaysWebView: false,
     },
     LiveUpdate: {
       // URL de tu servidor de actualizaciones (configura según tu backend)
@@ -39,7 +39,7 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true, // Cambiar a false en producción
   },
   ios: {
-    contentInset: "always",
+    contentInset: "automatic",
     allowsLinkPreview: false,
     scrollEnabled: true,
   },

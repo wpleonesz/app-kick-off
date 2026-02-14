@@ -6,25 +6,21 @@ import {
   IonContent,
   IonButton,
   IonSpinner,
+  IonCard,
+  IonCardContent,
+  IonText,
+  IonGrid,
+  IonRow,
+  IonCol,
 } from "@ionic/react";
 import { authService } from "../services/auth.service";
-import { IonRefresher, IonRefresherContent } from "@ionic/react";
-import { RefresherEventDetail } from "@ionic/core";
-import { useRefreshData } from "../hooks/useRealtimeData";
 import { useAppToast } from "../hooks/useAppToast";
 import { AppToast } from "../components/common/AppToast";
 import { loginSchema, LoginFormData } from "../schemas/auth.schemas";
 import { FormInput } from "../components/FormInput";
 
 const Login: React.FC = () => {
-  const { refreshProfile } = useRefreshData();
   const { toast, showError, dismissToast } = useAppToast();
-
-  // Pull-to-refresh para refrescar datos globales (por ejemplo, perfil)
-  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await refreshProfile();
-    event.detail.complete();
-  };
 
   const {
     control,
@@ -52,108 +48,130 @@ const Login: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen className="ion-padding">
-        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent
-            pullingText="Desliza para refrescar"
-            refreshingSpinner="circles"
-          />
-        </IonRefresher>
-        <div
+      <IonContent
+        fullscreen
+        scrollY={true}
+        className="login-content"
+        style={
+          {
+            "--background": "#ffffff",
+            "--padding-start": "0",
+            "--padding-end": "0",
+            "--padding-top": "0",
+            "--padding-bottom": "0",
+          } as React.CSSProperties
+        }
+      >
+        <IonGrid
+          className="ion-no-padding"
           style={{
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             minHeight: "100%",
-            paddingTop: "max(env(safe-area-inset-top), 20px)",
-            paddingBottom: "max(env(safe-area-inset-bottom), 20px)",
-            paddingLeft: "20px",
-            paddingRight: "20px",
-            maxWidth: "400px",
-            margin: "0 auto",
           }}
         >
-          <div className="text-center" style={{ marginBottom: "48px" }}>
-            <h1
-              style={{
-                fontSize: "32px",
-                fontWeight: 700,
-                marginBottom: "12px",
-              }}
-            >
-              Bienvenido
-            </h1>
-            <p
-              style={{
-                color: "var(--ion-color-medium)",
-                fontSize: "16px",
-              }}
-            >
-              Ingresa tus credenciales para continuar
-            </p>
-          </div>
+          {/* Branding */}
+          <IonRow className="ion-justify-content-center ion-margin-bottom">
+            <IonCol size="auto" className="ion-text-center">
+              <IonText color="primary">
+                <h1
+                  style={{
+                    fontSize: "32px",
+                    fontWeight: 700,
+                    margin: "0 0 4px 0",
+                  }}
+                >
+                  Kick Off
+                </h1>
+              </IonText>
+              <IonText color="medium">
+                <p style={{ fontSize: "15px", margin: 0 }}>
+                  Ingresa tus credenciales para continuar
+                </p>
+              </IonText>
+            </IonCol>
+          </IonRow>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div style={{ marginBottom: "24px" }}>
-              <FormInput
-                name="username"
-                control={control}
-                label="Usuario"
-                type="text"
-                placeholder="Ingresa tu usuario"
-                autocomplete="username"
-                required
-                error={errors.username?.message}
-              />
-
-              <FormInput
-                name="password"
-                control={control}
-                label="Contraseña"
-                type="password"
-                placeholder="Ingresa tu contraseña"
-                autocomplete="current-password"
-                required
-                error={errors.password?.message}
-              />
-            </div>
-
-            <IonButton
-              type="submit"
-              expand="block"
-              disabled={isSubmitting}
-              style={{
-                height: "52px",
-                fontSize: "17px",
-                fontWeight: 600,
-                marginBottom: "12px",
-                "--border-radius": "12px",
-                "--background": "#1877f2",
-                "--background-hover": "#166fe5",
-                "--background-activated": "#1565d8",
-              }}
+          {/* Login Card */}
+          <IonRow className="ion-justify-content-center ion-padding-horizontal">
+            <IonCol
+              sizeMd="6"
+              sizeLg="4"
+              sizeXl="3"
+              style={{ maxWidth: "400px" }}
             >
-              {isSubmitting ? <IonSpinner name="crescent" /> : "Iniciar Sesión"}
-            </IonButton>
+              <IonCard
+                style={{ margin: 0, boxShadow: "none", background: "#ffffff" }}
+              >
+                <IonCardContent style={{ padding: "24px 20px" }}>
+                  <form onSubmit={handleSubmit(onSubmit)}>
+                    <FormInput
+                      name="username"
+                      control={control}
+                      label="Usuario"
+                      type="text"
+                      placeholder="Ingresa tu usuario"
+                      autocomplete="username"
+                      required
+                      error={errors.username?.message}
+                    />
 
-            <IonButton
-              expand="block"
-              fill="outline"
-              routerLink="/register"
-              disabled={isSubmitting}
-              style={{
-                height: "52px",
-                fontSize: "17px",
-                fontWeight: 600,
-                "--border-radius": "12px",
-                "--border-color": "#1877f2",
-                "--color": "#1877f2",
-              }}
+                    <FormInput
+                      name="password"
+                      control={control}
+                      label="Contraseña"
+                      type="password"
+                      placeholder="Ingresa tu contraseña"
+                      autocomplete="current-password"
+                      required
+                      error={errors.password?.message}
+                    />
+
+                    <IonButton
+                      type="submit"
+                      expand="block"
+                      disabled={isSubmitting}
+                      style={{
+                        marginTop: "8px",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <IonSpinner name="crescent" />
+                      ) : (
+                        "Iniciar Sesión"
+                      )}
+                    </IonButton>
+                  </form>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+          </IonRow>
+
+          {/* Create Account */}
+          <IonRow
+            className="ion-justify-content-center ion-padding-horizontal"
+            style={{ marginTop: "16px" }}
+          >
+            <IonCol
+              sizeMd="6"
+              sizeLg="4"
+              sizeXl="3"
+              style={{ maxWidth: "400px" }}
             >
-              Crear Cuenta
-            </IonButton>
-          </form>
-        </div>
+              <IonButton
+                expand="block"
+                fill="outline"
+                color="secondary"
+                routerLink="/register"
+                disabled={isSubmitting}
+              >
+                Crear Cuenta Nueva
+              </IonButton>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
 
         <AppToast toast={toast} onDismiss={dismissToast} />
       </IonContent>

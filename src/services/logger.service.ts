@@ -15,11 +15,11 @@
  * - Timestamps y contexto automático
  */
 
-import { Preferences } from '@capacitor/preferences';
-import api from '../lib/api';
-import { device } from '../lib/device';
+import { Preferences } from "@capacitor/preferences";
+import api from "../lib/api";
+import { device } from "../lib/device";
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+export type LogLevel = "debug" | "info" | "warn" | "error" | "fatal";
 
 export interface LogEntry {
   id: string;
@@ -46,7 +46,7 @@ class LoggerService {
   private logQueue: LogEntry[] = [];
 
   /** ID de sesión */
-  private sessionId: string = '';
+  private sessionId: string = "";
 
   /** Usuario actual */
   private currentUserId: string | null = null;
@@ -61,7 +61,7 @@ class LoggerService {
   private maxLocalLogs = 50;
 
   /** Nivel mínimo de log a registrar */
-  private minLogLevel: LogLevel = 'debug';
+  private minLogLevel: LogLevel = "debug";
 
   /**
    * Inicializar el logger
@@ -84,12 +84,12 @@ class LoggerService {
         this.syncLogs();
       }, this.syncInterval);
 
-      console.log('[Logger] Initialized');
+      console.log("[Logger] Initialized");
 
       // Capturar errores no capturados globalmente
-      window.addEventListener('error', (event) => {
+      window.addEventListener("error", (event) => {
         this.error(
-          'Uncaught Error',
+          "Uncaught Error",
           {
             message: event.message,
             filename: event.filename,
@@ -100,15 +100,15 @@ class LoggerService {
         );
       });
 
-      window.addEventListener('unhandledrejection', (event) => {
+      window.addEventListener("unhandledrejection", (event) => {
         this.error(
-          'Unhandled Promise Rejection',
+          "Unhandled Promise Rejection",
           { reason: event.reason },
           event.reason?.stack,
         );
       });
     } catch (error) {
-      console.error('[Logger] Error initializing:', error);
+      console.error("[Logger] Error initializing:", error);
     }
   }
 
@@ -123,10 +123,10 @@ class LoggerService {
 
     // Intentar sincronizar logs antes de cerrar
     this.syncLogs().catch((err) =>
-      console.warn('[Logger] Error syncing on cleanup:', err),
+      console.warn("[Logger] Error syncing on cleanup:", err),
     );
 
-    console.log('[Logger] Cleaned up');
+    console.log("[Logger] Cleaned up");
   }
 
   /**
@@ -147,8 +147,8 @@ class LoggerService {
    * Log de nivel debug
    */
   debug(message: string, context?: Record<string, any>, stack?: string): void {
-    if (this.shouldLog('debug')) {
-      this.addLogEntry('debug', message, context, stack);
+    if (this.shouldLog("debug")) {
+      this.addLogEntry("debug", message, context, stack);
     }
     console.debug(`[DEBUG] ${message}`, context);
   }
@@ -157,8 +157,8 @@ class LoggerService {
    * Log de nivel info
    */
   info(message: string, context?: Record<string, any>): void {
-    if (this.shouldLog('info')) {
-      this.addLogEntry('info', message, context);
+    if (this.shouldLog("info")) {
+      this.addLogEntry("info", message, context);
     }
     console.info(`[INFO] ${message}`, context);
   }
@@ -167,8 +167,8 @@ class LoggerService {
    * Log de nivel warn
    */
   warn(message: string, context?: Record<string, any>, stack?: string): void {
-    if (this.shouldLog('warn')) {
-      this.addLogEntry('warn', message, context, stack);
+    if (this.shouldLog("warn")) {
+      this.addLogEntry("warn", message, context, stack);
     }
     console.warn(`[WARN] ${message}`, context);
   }
@@ -177,8 +177,8 @@ class LoggerService {
    * Log de nivel error
    */
   error(message: string, context?: Record<string, any>, stack?: string): void {
-    if (this.shouldLog('error')) {
-      this.addLogEntry('error', message, context, stack);
+    if (this.shouldLog("error")) {
+      this.addLogEntry("error", message, context, stack);
     }
     console.error(`[ERROR] ${message}`, context, stack);
   }
@@ -187,8 +187,8 @@ class LoggerService {
    * Log de nivel fatal
    */
   fatal(message: string, context?: Record<string, any>, stack?: string): void {
-    if (this.shouldLog('fatal')) {
-      this.addLogEntry('fatal', message, context, stack);
+    if (this.shouldLog("fatal")) {
+      this.addLogEntry("fatal", message, context, stack);
     }
     console.error(`[FATAL] ${message}`, context, stack);
   }
@@ -208,7 +208,7 @@ class LoggerService {
 
       // Enviar logs al servidor
       await api.post(
-        '/api/logs',
+        "/api/logs",
         { logs: unsyncedLogs },
         true, // requiresAuth
       );
@@ -230,7 +230,7 @@ class LoggerService {
 
       await this.saveLogQueue();
     } catch (error) {
-      console.warn('[Logger] Sync failed:', error);
+      console.warn("[Logger] Sync failed:", error);
     }
   }
 
@@ -243,11 +243,11 @@ class LoggerService {
       unsyncedLogs: this.logQueue.filter((l) => !l.synced).length,
       syncedLogs: this.logQueue.filter((l) => l.synced).length,
       byLevel: {
-        debug: this.logQueue.filter((l) => l.level === 'debug').length,
-        info: this.logQueue.filter((l) => l.level === 'info').length,
-        warn: this.logQueue.filter((l) => l.level === 'warn').length,
-        error: this.logQueue.filter((l) => l.level === 'error').length,
-        fatal: this.logQueue.filter((l) => l.level === 'fatal').length,
+        debug: this.logQueue.filter((l) => l.level === "debug").length,
+        info: this.logQueue.filter((l) => l.level === "info").length,
+        warn: this.logQueue.filter((l) => l.level === "warn").length,
+        error: this.logQueue.filter((l) => l.level === "error").length,
+        fatal: this.logQueue.filter((l) => l.level === "fatal").length,
       },
     };
   }
@@ -264,8 +264,8 @@ class LoggerService {
    */
   async clear(): Promise<void> {
     this.logQueue = [];
-    await Preferences.remove({ key: 'logger_logs' });
-    console.log('[Logger] Cleared all logs');
+    await Preferences.remove({ key: "logger_logs" });
+    console.log("[Logger] Cleared all logs");
   }
 
   // ────────────────────────────────────────────────────────
@@ -273,7 +273,7 @@ class LoggerService {
   // ────────────────────────────────────────────────────────
 
   private shouldLog(level: LogLevel): boolean {
-    const levels: LogLevel[] = ['debug', 'info', 'warn', 'error', 'fatal'];
+    const levels: LogLevel[] = ["debug", "info", "warn", "error", "fatal"];
     const currentIndex = levels.indexOf(this.minLogLevel);
     const levelIndex = levels.indexOf(level);
     return levelIndex >= currentIndex;
@@ -304,7 +304,7 @@ class LoggerService {
       this.logQueue.push(entry);
       await this.saveLogQueue();
     } catch (error) {
-      console.warn('[Logger] Error adding log entry:', error);
+      console.warn("[Logger] Error adding log entry:", error);
     }
   }
 
@@ -321,25 +321,27 @@ class LoggerService {
       };
 
       await Preferences.set({
-        key: 'logger_logs',
+        key: "logger_logs",
         value: JSON.stringify(store),
       });
     } catch (error) {
-      console.warn('[Logger] Error saving log queue:', error);
+      console.warn("[Logger] Error saving log queue:", error);
     }
   }
 
   private async loadLogQueue(): Promise<void> {
     try {
-      const { value } = await Preferences.get({ key: 'logger_logs' });
+      const { value } = await Preferences.get({ key: "logger_logs" });
 
       if (value) {
         const store: LogStore = JSON.parse(value);
         this.logQueue = store.entries || [];
-        console.debug(`[Logger] Loaded ${this.logQueue.length} logs from storage`);
+        console.debug(
+          `[Logger] Loaded ${this.logQueue.length} logs from storage`,
+        );
       }
     } catch (error) {
-      console.warn('[Logger] Error loading log queue:', error);
+      console.warn("[Logger] Error loading log queue:", error);
       this.logQueue = [];
     }
   }

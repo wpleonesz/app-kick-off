@@ -22,7 +22,7 @@ import "@ionic/react/css/display.css";
 
 /* Tema y estilos personalizados */
 import "./theme/variables.css";
-import "./theme/global.css";
+import "./theme.css";
 
 setupIonicReact();
 defineIonPhaser(window);
@@ -31,5 +31,5 @@ const container = document.getElementById("root")!;
 createRoot(container).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );
