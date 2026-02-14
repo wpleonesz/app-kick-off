@@ -75,11 +75,7 @@ const TabsSection: React.FC = () => {
       </IonTabs>
 
       {/* Indicador deslizante de tab activo – fixed al fondo */}
-      <IonRow
-        className="tab-indicator-track"
-        aria-hidden="true"
-        style={{ position: "fixed" }}
-      >
+      <IonRow className="tab-indicator-track" aria-hidden="true">
         <IonCol
           className="tab-indicator-thumb"
           style={{ transform: `translateX(${activeIndex * 100}%)` }}

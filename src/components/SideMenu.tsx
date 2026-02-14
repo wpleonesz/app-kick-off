@@ -130,9 +130,7 @@ const SideMenu: React.FC = () => {
     <IonMenu contentId="main-content" type="overlay" className="fb-side-menu">
       <IonHeader className="fb-header">
         <IonToolbar>
-          <IonTitle className="fb-logo-text" style={{ paddingLeft: "16px" }}>
-            Menú
-          </IonTitle>
+          <IonTitle className="fb-logo-text">Menú</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -148,23 +146,53 @@ const SideMenu: React.FC = () => {
           >
             <IonText
               className="fb-avatar-sm"
-              style={{ width: "50px", height: "50px", fontSize: "1.1rem" }}
+              style={{
+                width: "48px",
+                height: "48px",
+                fontSize: "1.1rem",
+                flexShrink: 0,
+              }}
               slot="start"
             >
               {getInitials(fullName)}
             </IonText>
-            <IonLabel>
-              <IonText className="fb-menu-profile-name">
+            <IonLabel className="fb-menu-profile-label">
+              <IonText
+                style={{
+                  display: "block",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  color: "var(--ion-text-color)",
+                  lineHeight: 1.3,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
                 {fullName || "Usuario"}
               </IonText>
-              <IonNote className="fb-menu-profile-role">
+              <IonNote
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  color: "var(--ion-color-medium)",
+                  marginTop: "2px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
                 {roleName || "Miembro"} · Ver tu perfil
               </IonNote>
             </IonLabel>
             <IonIcon
               icon={chevronForwardOutline}
               slot="end"
-              style={{ color: "var(--ion-color-medium)", fontSize: "18px" }}
+              style={{
+                color: "var(--ion-color-medium)",
+                fontSize: "16px",
+                flexShrink: 0,
+              }}
             />
           </IonItem>
         </IonMenuToggle>

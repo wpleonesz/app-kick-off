@@ -47,13 +47,46 @@ import { useProfile, useRefreshData } from "../hooks/useRealtimeData";
 import { useAppToast } from "../hooks/useAppToast";
 import { AppToast } from "../components/common/AppToast";
 
-const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  player: { bg: "#e7f3ff", text: "#1877f2" },
-  referee: { bg: "#fff3e0", text: "#e65100" },
-  organizer: { bg: "#e8f5e9", text: "#2e7d32" },
-  owner: { bg: "#f3e5f5", text: "#6a1b9a" },
-  administrator: { bg: "#fce4ec", text: "#c62828" },
-  default: { bg: "var(--ion-color-light)", text: "var(--ion-color-medium)" },
+const ROLE_COLORS: Record<
+  string,
+  { bg: string; text: string; darkBg: string; darkText: string }
+> = {
+  player: {
+    bg: "#e7f3ff",
+    text: "#1877f2",
+    darkBg: "rgba(45,136,255,0.15)",
+    darkText: "#2d88ff",
+  },
+  referee: {
+    bg: "#fff3e0",
+    text: "#e65100",
+    darkBg: "rgba(255,152,0,0.15)",
+    darkText: "#ffb74d",
+  },
+  organizer: {
+    bg: "#e8f5e9",
+    text: "#2e7d32",
+    darkBg: "rgba(76,175,80,0.15)",
+    darkText: "#81c784",
+  },
+  owner: {
+    bg: "#f3e5f5",
+    text: "#6a1b9a",
+    darkBg: "rgba(171,71,188,0.15)",
+    darkText: "#ce93d8",
+  },
+  administrator: {
+    bg: "#fce4ec",
+    text: "#c62828",
+    darkBg: "rgba(244,67,54,0.15)",
+    darkText: "#ef9a9a",
+  },
+  default: {
+    bg: "var(--ion-color-light)",
+    text: "var(--ion-color-medium)",
+    darkBg: "var(--ion-color-light)",
+    darkText: "var(--ion-color-medium)",
+  },
 };
 
 const Profile: React.FC = () => {
@@ -102,7 +135,14 @@ const Profile: React.FC = () => {
 
   const roleCode = user?.roles?.[0]?.Role?.code ?? "default";
   const roleName = user?.roles?.[0]?.Role?.name ?? user?.role ?? null;
-  const roleColor = ROLE_COLORS[roleCode] ?? ROLE_COLORS.default;
+  const roleColorDef = ROLE_COLORS[roleCode] ?? ROLE_COLORS.default;
+  const isDark =
+    document.body.classList.contains("dark") ||
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const roleColor = {
+    bg: isDark ? roleColorDef.darkBg : roleColorDef.bg,
+    text: isDark ? roleColorDef.darkText : roleColorDef.text,
+  };
 
   const fullName = user?.Person?.name || user?.name || user?.username || "";
   const email = user?.Person?.email || user?.email || "";
@@ -176,8 +216,9 @@ const Profile: React.FC = () => {
             <IonCard>
               <IonCardHeader
                 style={{
-                  background:
-                    "linear-gradient(135deg, #1877f2 0%, #0d47a1 100%)",
+                  background: isDark
+                    ? "linear-gradient(135deg, #2d88ff 0%, #1565c0 100%)"
+                    : "linear-gradient(135deg, #1877f2 0%, #0d47a1 100%)",
                   textAlign: "center",
                   paddingBottom: "20px",
                 }}
@@ -256,112 +297,169 @@ const Profile: React.FC = () => {
 
             {/* Tarjeta de información */}
             <IonCard>
-              <IonCardHeader>
-                <IonCardSubtitle>Información de la cuenta</IonCardSubtitle>
-              </IonCardHeader>
-              <IonList lines="inset" style={{ background: "transparent" }}>
-                {fullName && (
-                  <IonItem>
-                    <IonIcon
-                      slot="start"
-                      icon={personOutline}
-                      color="primary"
-                    />
-                    <IonLabel>
-                      <IonNote>Nombre completo</IonNote>
-                      <IonText
-                        color="dark"
-                        style={{ display: "block", fontWeight: 600 }}
-                      >
-                        {fullName}
-                      </IonText>
-                    </IonLabel>
-                  </IonItem>
-                )}
+              <IonCardContent style={{ padding: "4px 16px 16px" }}>
+                <IonNote className="fb-card-section-title">
+                  Información de la cuenta
+                </IonNote>
 
-                <IonItem>
-                  <IonIcon slot="start" icon={atOutline} color="primary" />
-                  <IonLabel>
-                    <IonNote>Usuario</IonNote>
-                    <IonText
-                      color="dark"
+                <IonList lines="none" style={{ padding: 0 }}>
+                  {fullName && (
+                    <IonItem
+                      lines="inset"
                       style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontFamily: "monospace",
+                        "--padding-start": "0",
+                        "--inner-padding-end": "0",
                       }}
                     >
-                      @{user.username}
-                    </IonText>
-                  </IonLabel>
-                </IonItem>
+                      <IonIcon
+                        slot="start"
+                        icon={personOutline}
+                        color="medium"
+                      />
+                      <IonLabel>
+                        <IonNote style={{ fontSize: "12px" }}>
+                          Nombre completo
+                        </IonNote>
+                        <IonText
+                          style={{
+                            display: "block",
+                            fontWeight: 500,
+                            fontSize: "15px",
+                          }}
+                        >
+                          {fullName}
+                        </IonText>
+                      </IonLabel>
+                    </IonItem>
+                  )}
 
-                <IonItem>
-                  <IonIcon slot="start" icon={mailOutline} color="primary" />
-                  <IonLabel>
-                    <IonNote>Correo electrónico</IonNote>
-                    <IonText
-                      color="dark"
-                      style={{ display: "block", fontWeight: 600 }}
-                    >
-                      {email || "No disponible"}
-                    </IonText>
-                  </IonLabel>
-                </IonItem>
-
-                {dni && (
-                  <IonItem>
-                    <IonIcon slot="start" icon={cardOutline} color="primary" />
+                  <IonItem
+                    lines="inset"
+                    style={{
+                      "--padding-start": "0",
+                      "--inner-padding-end": "0",
+                    }}
+                  >
+                    <IonIcon slot="start" icon={atOutline} color="medium" />
                     <IonLabel>
-                      <IonNote>Cédula / DNI</IonNote>
+                      <IonNote style={{ fontSize: "12px" }}>Usuario</IonNote>
                       <IonText
-                        color="dark"
-                        style={{ display: "block", fontWeight: 600 }}
-                      >
-                        {dni}
-                      </IonText>
-                    </IonLabel>
-                  </IonItem>
-                )}
-
-                {mobile && (
-                  <IonItem>
-                    <IonIcon slot="start" icon={callOutline} color="primary" />
-                    <IonLabel>
-                      <IonNote>Teléfono</IonNote>
-                      <IonText
-                        color="dark"
-                        style={{ display: "block", fontWeight: 600 }}
-                      >
-                        {mobile}
-                      </IonText>
-                    </IonLabel>
-                  </IonItem>
-                )}
-
-                {roleName && (
-                  <IonItem lines="none">
-                    <IonIcon
-                      slot="start"
-                      icon={shieldCheckmarkOutline}
-                      color="primary"
-                    />
-                    <IonLabel>
-                      <IonNote>Rol</IonNote>
-                      <IonChip
                         style={{
-                          background: roleColor.bg,
-                          color: roleColor.text,
-                          marginTop: "4px",
-                          marginLeft: 0,
+                          display: "block",
+                          fontWeight: 500,
+                          fontSize: "15px",
+                          fontFamily: "monospace",
                         }}
                       >
-                        <IonLabel>{roleName}</IonLabel>
-                      </IonChip>
+                        @{user.username}
+                      </IonText>
                     </IonLabel>
                   </IonItem>
-                )}
-              </IonList>
+
+                  <IonItem
+                    lines="inset"
+                    style={{
+                      "--padding-start": "0",
+                      "--inner-padding-end": "0",
+                    }}
+                  >
+                    <IonIcon slot="start" icon={mailOutline} color="medium" />
+                    <IonLabel>
+                      <IonNote style={{ fontSize: "12px" }}>
+                        Correo electrónico
+                      </IonNote>
+                      <IonText
+                        style={{
+                          display: "block",
+                          fontWeight: 500,
+                          fontSize: "15px",
+                        }}
+                      >
+                        {email || "No disponible"}
+                      </IonText>
+                    </IonLabel>
+                  </IonItem>
+
+                  {dni && (
+                    <IonItem
+                      lines="inset"
+                      style={{
+                        "--padding-start": "0",
+                        "--inner-padding-end": "0",
+                      }}
+                    >
+                      <IonIcon slot="start" icon={cardOutline} color="medium" />
+                      <IonLabel>
+                        <IonNote style={{ fontSize: "12px" }}>
+                          Cédula / DNI
+                        </IonNote>
+                        <IonText
+                          style={{
+                            display: "block",
+                            fontWeight: 500,
+                            fontSize: "15px",
+                          }}
+                        >
+                          {dni}
+                        </IonText>
+                      </IonLabel>
+                    </IonItem>
+                  )}
+
+                  {mobile && (
+                    <IonItem
+                      lines="inset"
+                      style={{
+                        "--padding-start": "0",
+                        "--inner-padding-end": "0",
+                      }}
+                    >
+                      <IonIcon slot="start" icon={callOutline} color="medium" />
+                      <IonLabel>
+                        <IonNote style={{ fontSize: "12px" }}>Teléfono</IonNote>
+                        <IonText
+                          style={{
+                            display: "block",
+                            fontWeight: 500,
+                            fontSize: "15px",
+                          }}
+                        >
+                          {mobile}
+                        </IonText>
+                      </IonLabel>
+                    </IonItem>
+                  )}
+
+                  {roleName && (
+                    <IonItem
+                      lines="none"
+                      style={{
+                        "--padding-start": "0",
+                        "--inner-padding-end": "0",
+                      }}
+                    >
+                      <IonIcon
+                        slot="start"
+                        icon={shieldCheckmarkOutline}
+                        color="medium"
+                      />
+                      <IonLabel>
+                        <IonNote style={{ fontSize: "12px" }}>Rol</IonNote>
+                        <IonChip
+                          style={{
+                            background: roleColor.bg,
+                            color: roleColor.text,
+                            marginTop: "4px",
+                            marginLeft: 0,
+                          }}
+                        >
+                          <IonLabel>{roleName}</IonLabel>
+                        </IonChip>
+                      </IonLabel>
+                    </IonItem>
+                  )}
+                </IonList>
+              </IonCardContent>
             </IonCard>
 
             {/* Botón de cerrar sesión */}

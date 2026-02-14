@@ -78,11 +78,7 @@ const Home: React.FC = () => {
       {/* ── Facebook-style Header ── */}
       <IonHeader className="fb-header">
         <IonToolbar>
-          <IonTitle
-            slot="start"
-            className="fb-logo-text"
-            style={{ paddingLeft: "12px" }}
-          >
+          <IonTitle slot="start" className="fb-logo-text">
             Kick Off
           </IonTitle>
           <IonButtons slot="end">
@@ -143,26 +139,25 @@ const Home: React.FC = () => {
             {/* ── Quick Actions (horizontal scroll) ── */}
             <IonRow className="fb-quick-actions-scroll">
               {QUICK_ACTIONS.map((action) => (
-                <IonButton
+                <IonCol
                   key={action.label}
-                  fill="clear"
-                  className="fb-quick-action-item"
+                  size="auto"
+                  className="fb-quick-action-item ion-text-center"
+                  style={{ padding: 0 }}
                 >
-                  <IonCol className="ion-text-center" style={{ padding: 0 }}>
-                    <IonText
-                      className="fb-quick-action-icon"
-                      style={{
-                        backgroundColor: action.color + "18",
-                        color: action.color,
-                      }}
-                    >
-                      <IonIcon icon={action.icon} />
-                    </IonText>
-                    <IonNote className="fb-quick-action-label">
-                      {action.label}
-                    </IonNote>
-                  </IonCol>
-                </IonButton>
+                  <IonText
+                    className="fb-quick-action-icon"
+                    style={{
+                      backgroundColor: action.color + "18",
+                      color: action.color,
+                    }}
+                  >
+                    <IonIcon icon={action.icon} />
+                  </IonText>
+                  <IonNote className="fb-quick-action-label">
+                    {action.label}
+                  </IonNote>
+                </IonCol>
               ))}
             </IonRow>
 
@@ -233,13 +228,13 @@ const Home: React.FC = () => {
                 </IonRow>
                 {/* Reaction-style bar */}
                 <IonRow className="fb-reaction-bar">
-                  <IonButton fill="clear" className="fb-reaction-btn">
+                  <IonButton fill="clear">
                     <IonIcon icon={thumbsUpOutline} /> Me gusta
                   </IonButton>
-                  <IonButton fill="clear" className="fb-reaction-btn">
+                  <IonButton fill="clear">
                     <IonIcon icon={chatbubbleOutline} /> Comentar
                   </IonButton>
-                  <IonButton fill="clear" className="fb-reaction-btn">
+                  <IonButton fill="clear">
                     <IonIcon icon={shareSocialOutline} /> Compartir
                   </IonButton>
                 </IonRow>
@@ -248,50 +243,117 @@ const Home: React.FC = () => {
 
             {/* ── Info Card ── */}
             <IonCard>
-              <IonCardContent style={{ padding: "4px 16px" }}>
+              <IonCardContent style={{ padding: "4px 16px 16px" }}>
                 <IonNote className="fb-card-section-title">
                   Tu información
                 </IonNote>
 
-                {fullName && (
-                  <IonItem lines="inset" className="fb-info-row">
-                    <IonIcon icon={personOutline} slot="start" />
-                    <IonLabel>
-                      <IonNote>Nombre Completo</IonNote>
-                      <IonText>{fullName}</IonText>
-                    </IonLabel>
-                  </IonItem>
-                )}
+                <IonList lines="none" style={{ padding: 0 }}>
+                  {fullName && (
+                    <IonItem
+                      lines="inset"
+                      style={{
+                        "--padding-start": "0",
+                        "--inner-padding-end": "0",
+                      }}
+                    >
+                      <IonIcon
+                        icon={personOutline}
+                        slot="start"
+                        color="medium"
+                      />
+                      <IonLabel>
+                        <IonNote style={{ fontSize: "12px" }}>
+                          Nombre Completo
+                        </IonNote>
+                        <IonText
+                          style={{
+                            display: "block",
+                            fontWeight: 500,
+                            fontSize: "15px",
+                          }}
+                        >
+                          {fullName}
+                        </IonText>
+                      </IonLabel>
+                    </IonItem>
+                  )}
 
-                <IonItem lines="inset" className="fb-info-row">
-                  <IonIcon icon={atOutline} slot="start" />
-                  <IonLabel>
-                    <IonNote>Usuario</IonNote>
-                    <IonText>@{user.username}</IonText>
-                  </IonLabel>
-                </IonItem>
-
-                {(user.Person?.email || user.email) && (
-                  <IonItem lines="inset" className="fb-info-row">
-                    <IonIcon icon={mailOutline} slot="start" />
+                  <IonItem
+                    lines="inset"
+                    style={{
+                      "--padding-start": "0",
+                      "--inner-padding-end": "0",
+                    }}
+                  >
+                    <IonIcon icon={atOutline} slot="start" color="medium" />
                     <IonLabel>
-                      <IonNote>Email</IonNote>
-                      <IonText>{user.Person?.email || user.email}</IonText>
-                    </IonLabel>
-                  </IonItem>
-                )}
-
-                {roleName && (
-                  <IonItem lines="none" className="fb-info-row">
-                    <IonIcon icon={shieldCheckmarkOutline} slot="start" />
-                    <IonLabel>
-                      <IonNote>Rol</IonNote>
-                      <IonText style={{ textTransform: "capitalize" }}>
-                        {roleName}
+                      <IonNote style={{ fontSize: "12px" }}>Usuario</IonNote>
+                      <IonText
+                        style={{
+                          display: "block",
+                          fontWeight: 500,
+                          fontSize: "15px",
+                        }}
+                      >
+                        @{user.username}
                       </IonText>
                     </IonLabel>
                   </IonItem>
-                )}
+
+                  {(user.Person?.email || user.email) && (
+                    <IonItem
+                      lines="inset"
+                      style={{
+                        "--padding-start": "0",
+                        "--inner-padding-end": "0",
+                      }}
+                    >
+                      <IonIcon icon={mailOutline} slot="start" color="medium" />
+                      <IonLabel>
+                        <IonNote style={{ fontSize: "12px" }}>Email</IonNote>
+                        <IonText
+                          style={{
+                            display: "block",
+                            fontWeight: 500,
+                            fontSize: "15px",
+                          }}
+                        >
+                          {user.Person?.email || user.email}
+                        </IonText>
+                      </IonLabel>
+                    </IonItem>
+                  )}
+
+                  {roleName && (
+                    <IonItem
+                      lines="none"
+                      style={{
+                        "--padding-start": "0",
+                        "--inner-padding-end": "0",
+                      }}
+                    >
+                      <IonIcon
+                        icon={shieldCheckmarkOutline}
+                        slot="start"
+                        color="medium"
+                      />
+                      <IonLabel>
+                        <IonNote style={{ fontSize: "12px" }}>Rol</IonNote>
+                        <IonText
+                          style={{
+                            display: "block",
+                            fontWeight: 500,
+                            fontSize: "15px",
+                            textTransform: "capitalize",
+                          }}
+                        >
+                          {roleName}
+                        </IonText>
+                      </IonLabel>
+                    </IonItem>
+                  )}
+                </IonList>
               </IonCardContent>
             </IonCard>
           </>

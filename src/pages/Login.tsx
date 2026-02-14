@@ -54,7 +54,7 @@ const Login: React.FC = () => {
         className="login-content"
         style={
           {
-            "--background": "#ffffff",
+            "--background": "var(--ion-background-color, #ffffff)",
             "--padding-start": "0",
             "--padding-end": "0",
             "--padding-top": "0",
@@ -105,7 +105,11 @@ const Login: React.FC = () => {
               style={{ maxWidth: "400px" }}
             >
               <IonCard
-                style={{ margin: 0, boxShadow: "none", background: "#ffffff" }}
+                style={{
+                  margin: 0,
+                  boxShadow: "none",
+                  background: "var(--ion-card-background, #ffffff)",
+                }}
               >
                 <IonCardContent style={{ padding: "24px 20px" }}>
                   <form onSubmit={handleSubmit(onSubmit)}>

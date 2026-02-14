@@ -119,6 +119,9 @@ ion-content {
   font-weight: 800;
   color: var(--ion-color-primary);
   letter-spacing: -0.5px;
+  padding-inline-start: clamp(8px, 3vw, 16px);
+  padding-inline-end: 0;
+  text-align: left;
 }
 
 .fb-header-btn {
@@ -141,6 +144,14 @@ ion-content {
   .fb-header-btn {
     --color: #e4e6eb;
   }
+}
+
+body.dark .fb-logo-text {
+  color: var(--ion-color-primary);
+}
+
+body.dark .fb-header-btn {
+  --color: #e4e6eb;
 }
 
 /* ── "What's on your mind?" bar ── */
@@ -174,6 +185,15 @@ ion-content {
   }
 }
 
+body.dark .fb-thought-bubble {
+  background: #3a3b3c;
+  border-color: #3e4042;
+}
+
+body.dark .fb-thought-bubble:active {
+  background: #4e4f50;
+}
+
 /* ── Quick Actions (horizontal scroll) ── */
 .fb-quick-actions-scroll {
   display: flex;
@@ -182,6 +202,8 @@ ion-content {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  flex-wrap: nowrap;
+  margin: 0;
 }
 
 .fb-quick-actions-scroll::-webkit-scrollbar {
@@ -200,6 +222,7 @@ ion-content {
   -webkit-tap-highlight-color: transparent;
   min-width: 70px;
   flex-shrink: 0;
+  --ion-grid-column-padding: 0px;
 }
 
 .fb-quick-action-item:active .fb-quick-action-icon {
@@ -214,6 +237,7 @@ ion-content {
   align-items: center;
   justify-content: center;
   transition: transform 0.15s ease;
+  margin: 0 auto;
 }
 
 .fb-quick-action-icon ion-icon {
@@ -225,6 +249,8 @@ ion-content {
   font-weight: 600;
   color: var(--ion-text-color);
   line-height: 1.2;
+  display: block;
+  margin-top: 4px;
 }
 
 /* ── Welcome Banner ── */
@@ -244,6 +270,10 @@ ion-content {
   }
 }
 
+body.dark .fb-welcome-banner {
+  background: #3a3b3c;
+}
+
 /* ── Reaction Bar (Like/Comment/Share) ── */
 .fb-reaction-bar {
   display: flex;
@@ -252,29 +282,22 @@ ion-content {
   padding: 0;
 }
 
-.fb-reaction-btn {
+.fb-reaction-bar ion-button {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  background: none;
-  border: none;
-  padding: 10px 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0;
+  height: 40px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--ion-color-medium);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.12s;
+  --color: var(--ion-color-medium);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-.fb-reaction-btn:active {
-  background: var(--ion-background-color, #f0f2f5);
-}
-
-.fb-reaction-btn ion-icon {
+.fb-reaction-bar ion-button ion-icon {
   font-size: 18px;
+  margin-right: 5px;
 }
 
 /* ── Card Section Title ── */
@@ -329,9 +352,14 @@ ion-content {
   .fb-context-menu .action-sheet-button .action-sheet-icon {
     color: #e4e6eb !important;
   }
-  .fb-reaction-btn:active {
-    background: #3a3b3c;
-  }
+}
+
+body.dark .fb-context-menu .action-sheet-group {
+  background: #242526 !important;
+}
+
+body.dark .fb-context-menu .action-sheet-button .action-sheet-icon {
+  color: #e4e6eb !important;
 }
 
 /* ── Indicador deslizante de tab activo (estilo Facebook) ── */
@@ -345,6 +373,9 @@ ion-content {
   z-index: 9999;
   display: flex;
   align-items: flex-end;
+  margin: 0;
+  padding: 0;
+  --ion-grid-column-padding: 0px;
 }
 
 html.md .tab-indicator-track {
@@ -357,6 +388,11 @@ html.md .tab-indicator-track {
   justify-content: center;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
+  padding: 0;
+  margin: 0;
+  flex: none;
+  max-width: 50%;
+  --ion-grid-column-padding: 0px;
 }
 
 .tab-indicator-thumb::after {
@@ -371,6 +407,10 @@ html.md .tab-indicator-track {
   .tab-indicator-thumb::after {
     background: #2d88ff;
   }
+}
+
+body.dark .tab-indicator-thumb::after {
+  background: #2d88ff;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -392,10 +432,10 @@ html.md .tab-indicator-track {
 
 /* ── User profile card at top ── */
 .fb-menu-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
+  --padding-start: 16px;
+  --padding-end: 12px;
+  --inner-padding-end: 0;
+  --min-height: 72px;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -404,22 +444,18 @@ html.md .tab-indicator-track {
   background: var(--ion-background-color, #f0f2f5);
 }
 
-.fb-menu-profile-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ion-text-color);
-  line-height: 1.3;
-}
-
-.fb-menu-profile-role {
-  font-size: 13px;
-  color: var(--ion-color-medium);
-  margin-top: 2px;
+.fb-menu-profile-label {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
 }
 
 /* ── Divider ── */
 .fb-menu-divider {
+  --min-height: 8px;
   height: 8px;
+  --padding-start: 0;
+  --inner-padding-end: 0;
   background: var(--ion-background-color, #f0f2f5);
 }
 
@@ -433,6 +469,7 @@ html.md .tab-indicator-track {
   --background: transparent;
   --padding-start: 16px;
   --padding-end: 16px;
+  --inner-padding-end: 0;
   --min-height: 48px;
   font-size: 15px;
   font-weight: 500;
@@ -454,7 +491,8 @@ html.md .tab-indicator-track {
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  margin-right: 4px;
+  margin-right: 12px;
+  flex-shrink: 0;
 }
 
 /* ── Danger item (Cerrar Sesión) ── */
@@ -465,8 +503,13 @@ html.md .tab-indicator-track {
 /* ── Footer ── */
 .fb-menu-footer {
   border-top: 1px solid var(--ion-border-color, #dddfe2);
-  padding: 10px 16px;
   background: var(--ion-card-background, #ffffff);
+}
+
+.fb-menu-footer ion-toolbar {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 40px;
 }
 
 .fb-menu-footer-text {
@@ -527,4 +570,60 @@ body.dark .fb-menu-icon-wrapper {
 body.dark .fb-menu-footer {
   border-color: #3e4042;
   background: #242526;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Global Dark Mode – body.dark overrides for cards, alerts
+   ══════════════════════════════════════════════════════════ */
+
+/* Cards */
+body.dark ion-card {
+  --background: #242526;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Alerts & Modals */
+body.dark ion-alert .alert-wrapper {
+  --background: #242526;
+  color: #e4e6eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  ion-alert .alert-wrapper {
+    --background: #242526;
+    color: #e4e6eb;
+  }
+}
+
+/* Login page – dark bg instead of white */
+body.dark .login-content {
+  --background: var(--ion-background-color) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-content {
+    --background: var(--ion-background-color) !important;
+  }
+}
+
+/* Reaction bar border */
+body.dark .fb-reaction-bar {
+  border-top-color: #3e4042;
+}
+
+@media (prefers-color-scheme: dark) {
+  .fb-reaction-bar {
+    border-top-color: #3e4042;
+  }
+}
+
+/* Quick action label in dark */
+body.dark .fb-quick-action-label {
+  color: #e4e6eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .fb-quick-action-label {
+    color: #e4e6eb;
+  }
 }
