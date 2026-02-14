@@ -1,0 +1,12 @@
+{
+  "name": "app-kick-off",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react",
+  "id": "com.example.appkickoff",
+  "buildCommand": "vite build",
+  "buildDir": "dist",
+  "srcDir": "src",
+  "serveCommand": "vite --host 0.0.0.0"
+}

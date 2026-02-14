@@ -15,14 +15,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Development Commands
 
-### Local Development
+### Web Development (ionic serve)
 ```bash
-npm run dev              # Start Vite dev server (http://localhost:3001)
+npm run dev              # Start Ionic dev server (http://localhost:3001)
 npm run dev:debug        # Start with debug logs enabled
-npm run build            # Build web bundle to dist/
+npm run dev:no-open      # Start without opening browser
+npm run serve            # Simple Ionic serve
+npm run serve:external   # Dev server accessible from network
+npm run web              # Alias for dev
+```
+
+### Build & Preview
+```bash
+npm run build            # Build web bundle to dist/ (production)
 npm run build:report     # Build and show bundle size
 npm run preview          # Preview build locally (port 4173)
+npm run web:build        # Alias for build
+npm run web:preview      # Build + preview
+```
+
+### Type Checking
+```bash
 npm run type-check       # Check TypeScript without compiling
+npm run lint:ts          # Lint TypeScript with readable output
 ```
 
 ### Cleanup
@@ -32,64 +47,82 @@ npm run clean:dist       # Remove dist/ only
 npm run clean:cache      # Clear Vite cache only
 ```
 
-### Mobile Development - Android
+### Android Development (ionic cap)
 ```bash
-npm run android          # Full: Build web, sync, run on emulator
-npm run android:dev      # Dev mode (cleartext HTTP, debuggable)
-npm run android:sync     # Build and sync only (no run)
-npm run android:sync:only # ⚡ Sync ONLY - fast change iteration (~5 sec)
-npm run android:build    # Build APK
-npm run android:build:release  # Build release bundle (AAB for Play Store)
-npm run android:open     # Open Android Studio
-npm run android:logs     # Stream logcat in real-time
-npm run android:debug    # Open dev menu
+npm run android              # Build for Android Studio
+npm run android:no-open      # Build without opening Studio
+npm run android:dev          # Full dev: build + sync + run
+npm run android:dev:live     # Dev with live reload enabled
+npm run android:run          # Run on emulator/device
+npm run android:run:live     # Run with live reload
+npm run android:run:device   # Run on specific device (with selection)
+npm run android:run:device:live  # Run on device with live reload
+npm run android:studio       # Open Android Studio
+npm run android:logs         # View device logcat in real-time
+npm run android:logs:filter  # View filtered logs only
+npm run android:debug        # Open dev menu + view logs
 ```
 
-### Mobile Development - iOS
+### iOS Development (ionic cap)
 ```bash
-npm run ios              # Full: Build web, sync, run on simulator
-npm run ios:dev          # Dev mode (debuggable)
-npm run ios:sync         # Build and sync only (no run)
-npm run ios:sync:only    # ⚡ Sync ONLY - fast change iteration (~5 sec)
-npm run ios:build        # Build for iOS
-npm run ios:open         # Open Xcode
-npm run ios:logs         # Stream logs in real-time
+npm run ios                  # Build for Xcode
+npm run ios:no-open          # Build without opening Xcode
+npm run ios:dev              # Full dev: build + sync + run
+npm run ios:dev:live         # Dev with live reload enabled
+npm run ios:run              # Run on simulator
+npm run ios:run:live         # Run with live reload
+npm run ios:run:device       # Run on specific device
+npm run ios:run:device:live  # Run on device with live reload
+npm run ios:xcode            # Open Xcode
+npm run ios:logs             # View simulator logs in real-time
 ```
 
 ### Capacitor Management
 ```bash
 npm run cap:sync         # Sync web build with native projects
-npm run cap:update       # Update native dependencies
+npm run cap:update       # Update native iOS/Android dependencies
 npm run cap:init         # Initialize Capacitor (rarely needed)
 ```
 
 ### Utilities & Diagnostics
 ```bash
-npm run info             # Show Capacitor doctor (versions, setup status)
-npm run info:versions    # Show Node/NPM/Capacitor/TypeScript versions
+npm run info             # Show Ionic info (versions, setup status)
+npm run info:cap         # Show Capacitor help
+npm run info:versions    # Show Node/NPM/Ionic/TypeScript versions
 npm run help             # Display all available commands
 ```
 
 ### Quick Start Examples
 ```bash
-# Development
-npm run dev                    # Start web dev server
+# Web development
+npm run dev                    # Start dev server with auto-open browser
 
-# Android development
-npm run android:dev            # Build, sync, run on emulator
-npm run android:logs           # See real-time logs in separate terminal
+# Web development without opening browser
+npm run dev:no-open            # Useful if you're using external device
 
-# iOS development
-npm run ios:dev                # Build, sync, run on simulator
-npm run ios:logs               # See real-time logs in separate terminal
+# Android development with live reload
+npm run android:dev:live       # Build + sync + run with hot reload
+# In separate terminal:
+npm run android:logs           # Monitor device logs
 
-# Fast iteration (use after changing TypeScript/CSS)
-npm run android:sync:only      # ⚡ ~5 seconds instead of 30
-npm run ios:sync:only          # ⚡ ~5 seconds instead of 30
+# iOS development with live reload
+npm run ios:dev:live           # Build + sync + run with hot reload
+# In separate terminal:
+npm run ios:logs               # Monitor simulator logs
+
+# Run on specific device
+npm run android:run:device:live    # Select device then run with live reload
+npm run ios:run:device:live        # Select device then run with live reload
 
 # Before committing
 npm run type-check             # Verify no TypeScript errors
 npm run build                  # Test production build
+npm run build:report           # See bundle size
+
+# Troubleshooting
+npm run dev:debug              # Start with all debug logs
+npm run info                   # Check Ionic/Capacitor setup
+npm run clean                  # Full clean if something is broken
 ```
 
 ## Architecture
