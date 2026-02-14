@@ -110,9 +110,6 @@ const TabBar: React.FC = () => {
     </IonTabBar>
   );
 };
-  mode: "md", // Material Design para consistencia entre plataformas
-  swipeBackEnabled: true,
-});
 
 const App: React.FC = () => {
   // Refrescar todos los datos al cambiar de tab
