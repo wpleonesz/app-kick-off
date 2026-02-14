@@ -16,7 +16,10 @@ export interface BundleInfo {
 }
 
 // URL base del servidor de actualizaciones - configurar según tu backend
-const UPDATE_SERVER_URL = import.meta.env.VITE_UPDATE_SERVER_URL || 'https://tu-servidor.com/api/updates';
+const UPDATE_SERVER_URL = import.meta.env.VITE_UPDATE_SERVER_URL || '';
+
+// Si no hay URL configurada, desactivar el servicio de actualizaciones
+const UPDATE_SERVICE_ENABLED = !!UPDATE_SERVER_URL;
 
 class UpdateService {
   private isNative: boolean;
@@ -48,7 +51,7 @@ class UpdateService {
   async checkForUpdate(): Promise<UpdateInfo> {
     const currentVersion = await this.getCurrentVersion();
 
-    if (!this.isNative) {
+    if (!this.isNative || !UPDATE_SERVICE_ENABLED) {
       return {
         currentVersion,
         updateAvailable: false,

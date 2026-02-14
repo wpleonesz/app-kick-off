@@ -11,12 +11,11 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
-  IonItem,
-  IonLabel,
   IonSelect,
   IonSelectOption,
-  IonText,
+  useIonViewWillEnter,
 } from "@ionic/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { authService } from "../services/auth.service";
 import { IonRefresher, IonRefresherContent } from "@ionic/react";
 import { RefresherEventDetail } from "@ionic/core";
@@ -28,9 +27,16 @@ import { registerSchema, RegisterFormData } from "../schemas/auth.schemas";
 import { FormInput } from "../components/FormInput";
 
 const Register: React.FC = () => {
+  const queryClient = useQueryClient();
   const { refreshProfile } = useRefreshData();
   const { data: roles, isLoading: rolesLoading } = useRoles();
   const { toast, showError, showSuccess, dismissToast } = useAppToast();
+
+  // Forzar refetch de roles cada vez que se entra a la pantalla
+  // IonSelect necesita que las opciones estén en el DOM desde el primer render
+  useIonViewWillEnter(() => {
+    queryClient.invalidateQueries({ queryKey: ["roles"] });
+  });
 
   // Pull-to-refresh para refrescar datos globales (por ejemplo, perfil)
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
@@ -179,32 +185,66 @@ const Register: React.FC = () => {
               error={errors.mobile?.message}
             />
 
-            <IonItem>
-              <IonLabel>Rol *</IonLabel>
-              <Controller
-                name="roleId"
-                control={control}
-                render={({ field }) => (
-                  <IonSelect
-                    placeholder="Selecciona tu rol"
-                    value={field.value}
-                    onIonChange={e => field.onChange(e.detail.value)}
-                    disabled={rolesLoading}
-                  >
-                    {roles?.map(role => (
-                      <IonSelectOption key={role.id} value={role.id}>
-                        {role.name}
-                      </IonSelectOption>
-                    ))}
-                  </IonSelect>
-                )}
-              />
-            </IonItem>
-            {errors.roleId && (
-              <IonText color="danger" style={{ display: "block", padding: "0 16px 16px", fontSize: "14px" }}>
-                {errors.roleId.message}
-              </IonText>
-            )}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "var(--ion-color-dark)",
+                marginBottom: "8px",
+              }}>
+                Rol <span style={{ color: "#1877f2" }}>*</span>
+              </label>
+              {rolesLoading ? (
+                <div style={{
+                  background: "var(--ion-color-light)",
+                  borderRadius: "12px",
+                  padding: "14px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  color: "var(--ion-color-medium)",
+                  fontSize: "16px",
+                }}>
+                  <IonSpinner name="crescent" style={{ width: "18px", height: "18px" }} />
+                  Cargando roles...
+                </div>
+              ) : (
+                <Controller
+                  name="roleId"
+                  control={control}
+                  render={({ field }) => (
+                    <IonSelect
+                      fill="solid"
+                      placeholder="Selecciona tu rol"
+                      value={field.value || null}
+                      onIonChange={e => field.onChange(e.detail.value)}
+                      style={{
+                        "--background": "var(--ion-color-light)",
+                        "--border-radius": "12px",
+                        "--padding-start": "16px",
+                        "--padding-end": "16px",
+                        "--padding-top": "14px",
+                        "--padding-bottom": "14px",
+                        "--highlight-color-focused": "#1877f2",
+                        fontSize: "16px",
+                      } as React.CSSProperties}
+                    >
+                      {roles?.map(role => (
+                        <IonSelectOption key={role.id} value={role.id}>
+                          {role.name}
+                        </IonSelectOption>
+                      ))}
+                    </IonSelect>
+                  )}
+                />
+              )}
+              {errors.roleId && (
+                <div style={{ fontSize: "12px", color: "var(--ion-color-danger)", marginTop: "6px", paddingLeft: "4px" }}>
+                  {errors.roleId.message}
+                </div>
+              )}
+            </div>
 
             <FormInput
               name="password"

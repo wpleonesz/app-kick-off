@@ -70,26 +70,13 @@ export const registerSchema = z
         .min(1, "El apellido es obligatorio")
         .min(2, "El apellido debe tener al menos 2 caracteres"),
     ),
-    email: z
-      .preprocess(
-        (v) => (typeof v === "string" ? v.trim() : v),
-        z
-          .string()
-          .min(1, "El email es obligatorio")
-          .email("Ingresa un email válido"),
-      )
-      .refine(
-        (e) => {
-          const allowed = ["@banco.com.ec", "@gmail.com", "@yahoo.com"];
-          return allowed.some((d) =>
-            typeof e === "string" ? e.endsWith(d) : false,
-          );
-        },
-        {
-          message:
-            "El email debe pertenecer a @banco.com.ec, @gmail.com o @yahoo.com",
-        },
-      ),
+    email: z.preprocess(
+      (v) => (typeof v === "string" ? v.trim() : v),
+      z
+        .string()
+        .min(1, "El email es obligatorio")
+        .email("Ingresa un email válido"),
+    ),
     username: z.preprocess(
       (v) => (typeof v === "string" ? v.trim() : v),
       z

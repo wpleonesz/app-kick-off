@@ -77,14 +77,22 @@ async function handleResponse<T = any>(
   url: string,
 ): Promise<T> {
   // Guardar cookie de sesión si el servidor la envía
+  // iOS CapacitorHttp devuelve headers en minúsculas, Android puede variar
   if (response.status === 200 || response.status === 201) {
-    const setCookie = response.headers?.["Set-Cookie"];
-    if (setCookie) {
+    const rawCookie =
+      response.headers?.["Set-Cookie"] ||
+      response.headers?.["set-cookie"] ||
+      response.headers?.["SET-COOKIE"];
+    if (rawCookie) {
       try {
+        // Solo guardar la parte "nombre=valor" (antes del primer ';')
+        // El Cookie header de request NO debe incluir atributos como Max-Age, Path, etc.
+        const cookieValue = rawCookie.split(";")[0].trim();
         await Preferences.set({
           key: "session_cookie",
-          value: setCookie,
+          value: cookieValue,
         });
+        console.debug("Cookie de sesión guardada:", cookieValue.substring(0, 30) + "...");
       } catch (error) {
         console.warn("Error al guardar cookie:", error);
       }
@@ -189,11 +197,18 @@ async function request<T = any>(
 
     return handleResponse<T>(response, method, url);
   } catch (error) {
-    console.error("HTTP request error:", error);
+    // Extraer mensaje de error sea cual sea el formato (Error, objeto nativo, etc.)
+    const errMsg =
+      error instanceof Error
+        ? error.message
+        : (error as any)?.errorMessage ||
+          (error as any)?.message ||
+          JSON.stringify(error);
+    console.error(`HTTP request error [${method} ${url}]:`, errMsg);
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error("Error de conexión");
+    throw new Error(errMsg || "Error de conexión");
   }
 }
 

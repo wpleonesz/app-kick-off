@@ -9,8 +9,9 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     // Apunta al servidor de desarrollo de Vite
-    // Cambia esta IP por la de tu máquina (usa: ipconfig getifaddr en0)
-    url: 'http://192.168.1.6:3000',
+    // IP actual: 192.168.1.4 (obtener con: ifconfig | grep "inet ")
+    // Puerto: 3000 (el que usa ionic serve / vite dev)
+    url: 'http://192.168.1.4:3000',
     cleartext: true,
   },
   plugins: {

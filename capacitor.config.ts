@@ -25,7 +25,7 @@ const config: CapacitorConfig = {
       // URL de tu servidor de actualizaciones (configura según tu backend)
       appId: "com.example.appkickoff",
       autoDeleteBundles: true,
-      enabled: true,
+      enabled: false, // Cambiar a true cuando se configure el servidor de actualizaciones
       readyTimeout: 10000,
       resetOnUpdate: true,
     },

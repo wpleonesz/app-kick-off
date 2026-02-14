@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { authService } from "../services/auth.service";
+import { authService, getCurrentUser } from "../services/auth.service";
 import api from "../lib/api";
 import { API_BASE } from "../config";
 
@@ -41,11 +41,17 @@ export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
     queryFn: () => fetchWithAuth<User>("/api/auth/user"),
-    staleTime: 1000 * 30, // Datos considerados frescos por 30 segundos
-    refetchInterval: 1000 * 30, // Refetch cada 30 segundos
-    refetchOnWindowFocus: true, // Refetch cuando la app vuelve al frente
-    refetchOnReconnect: true, // Refetch cuando hay internet de nuevo
-    retry: 3, // Reintentar 3 veces si falla
+    // Mostrar datos del localStorage mientras se hace el fetch del backend
+    placeholderData: () => {
+      const cached = getCurrentUser();
+      return cached ? (cached as unknown as User) : undefined;
+    },
+    staleTime: 1000 * 30,              // Datos frescos 30 segundos
+    refetchInterval: 1000 * 30,        // Polling cada 30 segundos
+    refetchIntervalInBackground: true, // Seguir poliando en segundo plano
+    refetchOnWindowFocus: false,       // No funciona en Capacitor; usamos appStateChange
+    refetchOnReconnect: true,
+    retry: 2,
   });
 }
 

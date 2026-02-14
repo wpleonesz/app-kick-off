@@ -1,17 +1,17 @@
 PODS:
   - Alamofire (5.10.2)
-  - Capacitor (8.0.0):
+  - Capacitor (8.1.0):
     - CapacitorCordova
-  - CapacitorApp (8.0.0):
+  - CapacitorApp (8.0.1):
     - Capacitor
   - CapacitorCommunityHttp (1.4.1):
     - Capacitor
-  - CapacitorCordova (8.0.0)
-  - CapacitorPreferences (8.0.0):
+  - CapacitorCordova (8.1.0)
+  - CapacitorPreferences (8.0.1):
     - Capacitor
-  - CapacitorSplashScreen (8.0.0):
+  - CapacitorSplashScreen (8.0.1):
     - Capacitor
-  - CapacitorStatusBar (8.0.0):
+  - CapacitorStatusBar (8.0.1):
     - Capacitor
   - CapawesomeCapacitorLiveUpdate (8.1.0):
     - Alamofire (~> 5.10.2)
@@ -54,13 +54,13 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
-  Capacitor: 341ff7cf652ec695d1a8ebf604db448ac7b6d635
-  CapacitorApp: 3963a84197280757b84f126afd1520a85ae3b092
+  Capacitor: 47b825120c6b8b6d6f9f053e9350a8960d436710
+  CapacitorApp: 942306cd1acf7774a00e89a3986af3a67c8cad7a
   CapacitorCommunityHttp: 7eba71da94e070e37a26a60483350285a33e3903
-  CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
-  CapacitorPreferences: 443fabe9670226200e595658a87ef0b1566716d4
-  CapacitorSplashScreen: 422880d7117605c30699eb4b21644b62db42e86c
-  CapacitorStatusBar: 312e2e67928dfe9514c4a8916a1fd610552f5f35
+  CapacitorCordova: e8b76fd95fc1e157775abc484c59cc0de464095d
+  CapacitorPreferences: cca2021f386efb75947c850334447d9ff22b14f1
+  CapacitorSplashScreen: 4b46c72298db552b3c57ce021ef028b6dc7f1fa7
+  CapacitorStatusBar: 32206abd53b14f339763da26f71286deaa891e16
   CapawesomeCapacitorLiveUpdate: cb597aab760b01967b773e63adc317206b7f9e88
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 

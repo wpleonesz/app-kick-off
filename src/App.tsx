@@ -27,7 +27,7 @@ import { SplashScreen } from "@capacitor/splash-screen";
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { App as CapApp } from "@capacitor/app";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
@@ -35,24 +35,7 @@ import Profile from "./pages/Profile";
 import { authService } from "./services/auth.service";
 import { initStorage } from "./storage";
 import { updateService } from "./services/update.service";
-
-// Configuración de React Query para datos en tiempo real
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Refetch cuando la ventana recupera el foco
-      refetchOnWindowFocus: true,
-      // Refetch cuando hay conexión de nuevo
-      refetchOnReconnect: true,
-      // Mantener datos en caché por 5 minutos
-      gcTime: 1000 * 60 * 5,
-      // Datos considerados frescos por 10 segundos
-      staleTime: 1000 * 10,
-      // Reintentar 2 veces si falla
-      retry: 2,
-    },
-  },
-});
+import queryClient from "./queryClient";
 
 // Configuración de Ionic React con SafeArea habilitado
 setupIonicReact({
@@ -187,8 +170,16 @@ const App: React.FC = () => {
     };
     initialize();
 
+    // Refetch al volver al frente (Capacitor no dispara eventos de foco del browser)
+    const appStateListener = CapApp.addListener("appStateChange", ({ isActive }) => {
+      if (isActive) {
+        queryClient.invalidateQueries();
+      }
+    });
+
     // Cleanup listeners
     return () => {
+      appStateListener.then((l) => l.remove());
       CapApp.removeAllListeners();
     };
   }, []);

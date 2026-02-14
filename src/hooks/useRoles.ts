@@ -5,6 +5,7 @@ export function useRoles() {
   return useQuery({
     queryKey: ['roles'],
     queryFn: getRoles,
-    staleTime: 1000 * 60 * 10, // 10 min
+    staleTime: 1000 * 60 * 5, // 5 min (los roles cambian poco)
+    gcTime: 1000 * 60 * 10,   // Mantener en cache 10 min sin suscriptores
   });
 }

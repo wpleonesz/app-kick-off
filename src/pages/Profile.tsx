@@ -104,16 +104,23 @@ const Profile: React.FC = () => {
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
-              height: "50vh",
               padding: "20px",
               textAlign: "center",
             }}
           >
-            <p style={{ color: "var(--ion-color-danger)", marginBottom: "16px" }}>
+            <p
+              style={{ color: "var(--ion-color-danger)", marginBottom: "16px" }}
+            >
               Error al cargar el perfil
             </p>
-            <IonButton onClick={() => refreshProfile()}>
+            <IonButton
+              onClick={() => refreshProfile()}
+              style={{ marginBottom: "12px" }}
+            >
               Reintentar
+            </IonButton>
+            <IonButton expand="block" color="danger" onClick={handleLogout}>
+              Cerrar Sesión
             </IonButton>
           </div>
         )}
@@ -185,7 +192,7 @@ const Profile: React.FC = () => {
                         </IonLabel>
                       </IonItem>
                     )}
-                    {(user.roles && user.roles.length > 0) && (
+                    {user.roles && user.roles.length > 0 && (
                       <IonItem>
                         <IonLabel>
                           <h3 style={{ fontWeight: 600, marginBottom: "4px" }}>
