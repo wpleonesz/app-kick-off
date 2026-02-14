@@ -2,20 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService, getCurrentUser } from "../services/auth.service";
 import api from "../lib/api";
 import { API_BASE } from "../config";
+import { User, Role } from "../interfaces/user";
 
-// Tipos
-export interface User {
-  id?: number;
-  username: string;
-  email?: string;
-  name?: string;
-  firstName?: string;
-  lastName?: string;
-  dni?: string;
-  mobile?: string;
-  avatar?: string;
-  role?: string;
-}
+export type { User, Role };
 
 // Función para hacer fetch con autenticación
 async function fetchWithAuth<T>(endpoint: string): Promise<T> {
