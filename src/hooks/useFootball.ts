@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import {
   getRecentMatches,
   getUpcomingMatches,
   getFootballNews,
   getLiveScores,
+  type NewsLeagueId,
 } from "../services/football.service";
 
 const STALE = 1000 * 60 * 5; // 5 minutos (datos externos cambian menos)
@@ -24,10 +25,13 @@ export function useUpcomingMatches() {
   });
 }
 
-export function useFootballNews() {
-  return useQuery({
-    queryKey: ["football", "news"],
-    queryFn: getFootballNews,
+export function useFootballNews(league: NewsLeagueId = "soccer/eng.1") {
+  return useInfiniteQuery({
+    queryKey: ["football", "news", league],
+    queryFn: ({ pageParam = 1 }) => getFootballNews(league, pageParam),
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.hasMore ? (lastPageParam as number) + 1 : undefined,
+    initialPageParam: 1,
     staleTime: STALE,
   });
 }

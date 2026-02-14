@@ -33,6 +33,8 @@ import {
   trophyOutline,
   peopleOutline,
   calendarOutline,
+  newspaperOutline,
+  chevronForwardOutline,
   thumbsUpOutline,
   chatbubbleOutline,
   shareSocialOutline,
@@ -47,6 +49,8 @@ import {
   useUpcomingMatches,
   useFootballNews,
 } from "../hooks/useFootball";
+import { NEWS_LEAGUES, type NewsLeagueId } from "../services/football.service";
+import { NewsCard } from "../components/football/NewsCard";
 
 /* ── Quick-action items ── */
 const QUICK_ACTIONS = [
@@ -56,7 +60,7 @@ const QUICK_ACTIONS = [
   { icon: calendarOutline, label: "Agenda", color: "#fa3e3e" },
 ];
 
-type Tab = "recientes" | "proximos" | "noticias";
+type Tab = "recientes" | "proximos";
 
 const Home: React.FC = () => {
   const { data: user, isLoading } = useProfile();
@@ -64,7 +68,14 @@ const Home: React.FC = () => {
   const { toast, dismissToast } = useAppToast();
   const { data: recent, isLoading: loadingRecent } = useRecentMatches();
   const { data: upcoming, isLoading: loadingUpcoming } = useUpcomingMatches();
-  const { data: news, isLoading: loadingNews } = useFootballNews();
+  const [newsLeague, setNewsLeague] = useState<NewsLeagueId>("soccer/eng.1");
+  const {
+    data: newsData,
+    isLoading: loadingNews,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useFootballNews(newsLeague);
   const [tab, setTab] = useState<Tab>("recientes");
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
@@ -86,8 +97,9 @@ const Home: React.FC = () => {
   const roleName = user?.roles?.[0]?.Role?.name ?? user?.role ?? "";
   const isLoading2 =
     (tab === "recientes" && loadingRecent) ||
-    (tab === "proximos" && loadingUpcoming) ||
-    (tab === "noticias" && loadingNews);
+    (tab === "proximos" && loadingUpcoming);
+
+  const allNews = newsData?.pages.flatMap((p) => p.articles) ?? [];
 
   return (
     <IonPage>
@@ -458,6 +470,127 @@ const Home: React.FC = () => {
                     {upcoming?.map((match) => (
                       <MatchCard key={match.idEvent} match={match} />
                     ))}
+                  </>
+                )}
+              </IonCardContent>
+            </IonCard>
+
+            {/* ── Noticias Card (separada, con paginación incremental) ── */}
+            <IonCard>
+              <IonCardContent style={{ padding: "4px 16px 16px" }}>
+                <IonRow
+                  className="ion-align-items-center"
+                  style={{ marginBottom: "4px" }}
+                >
+                  <IonNote
+                    className="fb-card-section-title"
+                    style={{ margin: 0 }}
+                  >
+                    <IonIcon
+                      icon={newspaperOutline}
+                      style={{ verticalAlign: "middle", marginRight: "6px" }}
+                    />
+                    Noticias
+                  </IonNote>
+                </IonRow>
+
+                {/* League selector chips */}
+                <div
+                  style={{
+                    display: "flex",
+                    overflowX: "auto",
+                    gap: "8px",
+                    padding: "8px 0 12px",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {NEWS_LEAGUES.map((league) => (
+                    <IonButton
+                      key={league.id}
+                      size="small"
+                      fill={newsLeague === league.id ? "solid" : "outline"}
+                      onClick={() => setNewsLeague(league.id)}
+                      style={{
+                        "--border-radius": "20px",
+                        flexShrink: 0,
+                        fontSize: "12px",
+                      }}
+                    >
+                      <span style={{ marginRight: "4px" }}>{league.flag}</span>
+                      {league.label}
+                    </IonButton>
+                  ))}
+                </div>
+
+                {loadingNews && !isFetchingNextPage && (
+                  <IonRow
+                    className="ion-justify-content-center"
+                    style={{ padding: "20px 0" }}
+                  >
+                    <IonSpinner name="crescent" />
+                  </IonRow>
+                )}
+
+                {!loadingNews && allNews.length === 0 && (
+                  <IonText
+                    color="medium"
+                    style={{
+                      display: "block",
+                      textAlign: "center",
+                      padding: "20px 0",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Sin noticias disponibles
+                  </IonText>
+                )}
+
+                {allNews.length > 0 && (
+                  <>
+                    {allNews.map((article, i) => (
+                      <NewsCard key={`${newsLeague}-${i}`} article={article} />
+                    ))}
+
+                    {/* Cargar más */}
+                    {hasNextPage && (
+                      <IonButton
+                        expand="block"
+                        fill="outline"
+                        size="small"
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                        style={{
+                          marginTop: "12px",
+                          "--border-radius": "10px",
+                        }}
+                      >
+                        {isFetchingNextPage ? (
+                          <IonSpinner name="dots" style={{ height: "18px" }} />
+                        ) : (
+                          <>
+                            <IonIcon
+                              slot="start"
+                              icon={chevronForwardOutline}
+                            />
+                            Ver más noticias
+                          </>
+                        )}
+                      </IonButton>
+                    )}
+
+                    {!hasNextPage && allNews.length > 0 && (
+                      <IonText
+                        color="medium"
+                        style={{
+                          display: "block",
+                          textAlign: "center",
+                          padding: "12px 0 0",
+                          fontSize: "12px",
+                        }}
+                      >
+                        — No hay más noticias —
+                      </IonText>
+                    )}
                   </>
                 )}
               </IonCardContent>
