@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   IonPage,
   IonHeader,
@@ -41,6 +41,12 @@ import { RefresherEventDetail } from "@ionic/core";
 import { useProfile, useRefreshData } from "../hooks/useRealtimeData";
 import { useAppToast } from "../hooks/useAppToast";
 import { AppToast } from "../components/common/AppToast";
+import { MatchCard } from "../components/football/MatchCard";
+import {
+  useRecentMatches,
+  useUpcomingMatches,
+  useFootballNews,
+} from "../hooks/useFootball";
 
 /* ── Quick-action items ── */
 const QUICK_ACTIONS = [
@@ -50,10 +56,16 @@ const QUICK_ACTIONS = [
   { icon: calendarOutline, label: "Agenda", color: "#fa3e3e" },
 ];
 
+type Tab = "recientes" | "proximos" | "noticias";
+
 const Home: React.FC = () => {
   const { data: user, isLoading } = useProfile();
   const { refreshProfile } = useRefreshData();
   const { toast, dismissToast } = useAppToast();
+  const { data: recent, isLoading: loadingRecent } = useRecentMatches();
+  const { data: upcoming, isLoading: loadingUpcoming } = useUpcomingMatches();
+  const { data: news, isLoading: loadingNews } = useFootballNews();
+  const [tab, setTab] = useState<Tab>("recientes");
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await refreshProfile();
@@ -72,6 +84,10 @@ const Home: React.FC = () => {
 
   const fullName = user?.Person?.name || user?.name || user?.username || "";
   const roleName = user?.roles?.[0]?.Role?.name ?? user?.role ?? "";
+  const isLoading2 =
+    (tab === "recientes" && loadingRecent) ||
+    (tab === "proximos" && loadingUpcoming) ||
+    (tab === "noticias" && loadingNews);
 
   return (
     <IonPage>
@@ -356,6 +372,33 @@ const Home: React.FC = () => {
                 </IonList>
               </IonCardContent>
             </IonCard>
+          </>
+        )}
+
+        {tab === "recientes" && !loadingRecent && (
+          <>
+            <h3
+              style={{
+                fontWeight: 700,
+                marginBottom: "12px",
+                fontSize: "16px",
+              }}
+            >
+              Partidos Recientes — Premier League
+            </h3>
+            {recent?.length === 0 && (
+              <p
+                style={{
+                  color: "var(--ion-color-medium)",
+                  textAlign: "center",
+                }}
+              >
+                Sin partidos recientes
+              </p>
+            )}
+            {recent?.map((match) => (
+              <MatchCard key={match.idEvent} match={match} />
+            ))}
           </>
         )}
 
