@@ -21,7 +21,8 @@ import { Route, Redirect } from "react-router-dom";
 // por desajustes de tipos entre dependencias. Revisar más adelante.
 const RouteComp: any = Route as any;
 const RedirectComp: any = Redirect as any;
-import { home, person } from "ionicons/icons";
+import { home, homeOutline, person, personOutline } from "ionicons/icons";
+import { useLocation } from "react-router-dom";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { Capacitor } from "@capacitor/core";
@@ -39,6 +40,76 @@ import queryClient from "./queryClient";
 
 // Configuración de Ionic React con SafeArea habilitado
 setupIonicReact({
+  mode: "md",
+  swipeBackEnabled: true,
+});
+
+// ── Tab bar con indicador visual de tab activo ──────────────────────────────
+const TABS = [
+  { tab: "inicio", href: "/tabs/inicio", label: "Inicio", icon: homeOutline, activeIcon: home },
+  { tab: "perfil", href: "/tabs/perfil", label: "Perfil", icon: personOutline, activeIcon: person },
+];
+
+const TabBar: React.FC = () => {
+  const location = useLocation();
+
+  return (
+    <IonTabBar
+      slot="bottom"
+      style={{
+        "--background": "#ffffff",
+        "--border": "none",
+        boxShadow: "0 -1px 0 rgba(0,0,0,0.08)",
+        height: "60px",
+      } as React.CSSProperties}
+    >
+      {TABS.map(({ tab, href, label, icon, activeIcon }) => {
+        const isActive = location.pathname === href;
+        return (
+          <IonTabButton
+            key={tab}
+            tab={tab}
+            href={href}
+            style={{
+              "--color": "#9e9e9e",
+              "--color-selected": "#1877f2",
+            } as React.CSSProperties}
+          >
+            <IonIcon
+              icon={isActive ? activeIcon : icon}
+              style={{
+                fontSize: "22px",
+                transition: "transform 0.15s ease",
+                transform: isActive ? "scale(1.1)" : "scale(1)",
+              }}
+            />
+            <IonLabel
+              style={{
+                fontSize: "11px",
+                fontWeight: isActive ? 700 : 400,
+                letterSpacing: isActive ? "0.01em" : "normal",
+              }}
+            >
+              {label}
+            </IonLabel>
+            {isActive && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "4px",
+                  width: "4px",
+                  height: "4px",
+                  borderRadius: "50%",
+                  background: "#1877f2",
+                }}
+              />
+            )}
+          </IonTabButton>
+        );
+      })}
+    </IonTabBar>
+  );
+};
   mode: "md", // Material Design para consistencia entre plataformas
   swipeBackEnabled: true,
 });
@@ -259,16 +330,7 @@ const App: React.FC = () => {
                       <RedirectComp to="/tabs/inicio" />
                     </RouteComp>
                   </IonRouterOutlet>
-                  <IonTabBar slot="bottom">
-                    <IonTabButton tab="inicio" href="/tabs/inicio">
-                      <IonIcon icon={home} />
-                      <IonLabel>Inicio</IonLabel>
-                    </IonTabButton>
-                    <IonTabButton tab="perfil" href="/tabs/perfil">
-                      <IonIcon icon={person} />
-                      <IonLabel>Perfil</IonLabel>
-                    </IonTabButton>
-                  </IonTabBar>
+                  <TabBar />
                 </IonTabs>
               )}
             </RouteComp>
