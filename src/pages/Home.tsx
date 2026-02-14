@@ -372,33 +372,96 @@ const Home: React.FC = () => {
                 </IonList>
               </IonCardContent>
             </IonCard>
-          </>
-        )}
 
-        {tab === "recientes" && !loadingRecent && (
-          <>
-            <h3
-              style={{
-                fontWeight: 700,
-                marginBottom: "12px",
-                fontSize: "16px",
-              }}
-            >
-              Partidos Recientes — Premier League
-            </h3>
-            {recent?.length === 0 && (
-              <p
-                style={{
-                  color: "var(--ion-color-medium)",
-                  textAlign: "center",
-                }}
-              >
-                Sin partidos recientes
-              </p>
-            )}
-            {recent?.map((match) => (
-              <MatchCard key={match.idEvent} match={match} />
-            ))}
+            {/* ── Tabs de Partidos ── */}
+            <IonCard>
+              <IonCardContent style={{ padding: "4px 16px 16px" }}>
+                <IonNote className="fb-card-section-title">
+                  Partidos — Premier League
+                </IonNote>
+
+                <IonGrid style={{ padding: 0, marginBottom: "12px" }}>
+                  <IonRow>
+                    <IonCol style={{ padding: "0 4px 0 0" }}>
+                      <IonButton
+                        expand="block"
+                        size="small"
+                        fill={tab === "recientes" ? "solid" : "outline"}
+                        onClick={() => setTab("recientes")}
+                      >
+                        <IonIcon slot="start" icon={footballOutline} />
+                        Recientes
+                      </IonButton>
+                    </IonCol>
+                    <IonCol style={{ padding: "0 0 0 4px" }}>
+                      <IonButton
+                        expand="block"
+                        size="small"
+                        fill={tab === "proximos" ? "solid" : "outline"}
+                        onClick={() => setTab("proximos")}
+                      >
+                        <IonIcon slot="start" icon={calendarOutline} />
+                        Próximos
+                      </IonButton>
+                    </IonCol>
+                  </IonRow>
+                </IonGrid>
+
+                {/* Spinner de carga */}
+                {isLoading2 && (
+                  <IonRow
+                    className="ion-justify-content-center"
+                    style={{ padding: "20px 0" }}
+                  >
+                    <IonSpinner name="crescent" />
+                  </IonRow>
+                )}
+
+                {/* Recientes */}
+                {tab === "recientes" && !loadingRecent && (
+                  <>
+                    {(!recent || recent.length === 0) && (
+                      <IonText
+                        color="medium"
+                        style={{
+                          display: "block",
+                          textAlign: "center",
+                          padding: "20px 0",
+                          fontSize: "14px",
+                        }}
+                      >
+                        Sin partidos recientes
+                      </IonText>
+                    )}
+                    {recent?.map((match) => (
+                      <MatchCard key={match.idEvent} match={match} />
+                    ))}
+                  </>
+                )}
+
+                {/* Próximos */}
+                {tab === "proximos" && !loadingUpcoming && (
+                  <>
+                    {(!upcoming || upcoming.length === 0) && (
+                      <IonText
+                        color="medium"
+                        style={{
+                          display: "block",
+                          textAlign: "center",
+                          padding: "20px 0",
+                          fontSize: "14px",
+                        }}
+                      >
+                        Sin próximos partidos
+                      </IonText>
+                    )}
+                    {upcoming?.map((match) => (
+                      <MatchCard key={match.idEvent} match={match} />
+                    ))}
+                  </>
+                )}
+              </IonCardContent>
+            </IonCard>
           </>
         )}
 
