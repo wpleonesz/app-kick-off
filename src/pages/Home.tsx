@@ -48,8 +48,8 @@ import {
   useRecentMatches,
   useUpcomingMatches,
   useFootballNews,
+  useNewsLeagues,
 } from "../hooks/useFootball";
-import { NEWS_LEAGUES, type NewsLeagueId } from "../services/football.service";
 import { NewsCard } from "../components/football/NewsCard";
 
 /* ── Quick-action items ── */
@@ -68,7 +68,8 @@ const Home: React.FC = () => {
   const { toast, dismissToast } = useAppToast();
   const { data: recent, isLoading: loadingRecent } = useRecentMatches();
   const { data: upcoming, isLoading: loadingUpcoming } = useUpcomingMatches();
-  const [newsLeague, setNewsLeague] = useState<NewsLeagueId>("soccer/eng.1");
+  const { data: newsLeagues, isLoading: loadingLeagues } = useNewsLeagues();
+  const [newsLeague, setNewsLeague] = useState<string>("soccer/eng.1");
   const {
     data: newsData,
     isLoading: loadingNews,
@@ -504,7 +505,12 @@ const Home: React.FC = () => {
                     WebkitOverflowScrolling: "touch",
                   }}
                 >
-                  {NEWS_LEAGUES.map((league) => (
+                  {loadingLeagues && (
+                    <IonText color="medium" style={{ fontSize: "12px" }}>
+                      Cargando ligas...
+                    </IonText>
+                  )}
+                  {newsLeagues?.map((league) => (
                     <IonButton
                       key={league.id}
                       size="small"

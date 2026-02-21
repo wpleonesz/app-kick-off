@@ -1,4 +1,6 @@
-// --- TheSportsDB ---
+import api from "../lib/api";
+
+// --- TheSportsDB Types ---
 
 export interface SportsEvent {
   idEvent: string;
@@ -49,50 +51,7 @@ export interface SportsEvent {
   strAwayTeamBadge?: string;
 }
 
-const SPORTS_DB_API = "https://www.thesportsdb.com/api/v1/json/123";
-const LEAGUE_ID = "4328"; // Premier League
-
-export async function getEventsByDate(date: string): Promise<SportsEvent[]> {
-  try {
-    const response = await fetch(`${SPORTS_DB_API}/eventsday.php?d=${date}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    return data.events || [];
-  } catch (error) {
-    console.error("Error fetching events by date:", error);
-    return [];
-  }
-}
-
-export async function getRecentMatches(): Promise<SportsEvent[]> {
-  try {
-    const response = await fetch(
-      `${SPORTS_DB_API}/eventspastleague.php?id=${LEAGUE_ID}`,
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    return (data.events || []).slice(0, 10);
-  } catch (error) {
-    console.error("Error fetching recent matches:", error);
-    return [];
-  }
-}
-
-export async function getUpcomingMatches(): Promise<SportsEvent[]> {
-  try {
-    const response = await fetch(
-      `${SPORTS_DB_API}/eventsnextleague.php?id=${LEAGUE_ID}`,
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    return (data.events || []).slice(0, 10);
-  } catch (error) {
-    console.error("Error fetching upcoming matches:", error);
-    return [];
-  }
-}
-
-// --- ESPN Soccer ---
+// --- ESPN Soccer Types ---
 
 export interface EspnNewsItem {
   headline: string;
@@ -102,53 +61,95 @@ export interface EspnNewsItem {
   images: Array<{ url: string }>;
 }
 
-const ESPN_API = "https://site.api.espn.com/apis/site/v2/sports";
-
-/** Ligas disponibles para noticias */
-export const NEWS_LEAGUES = [
-  { id: "soccer/eng.1", label: "Premier League", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  { id: "soccer/esp.1", label: "La Liga", flag: "🇪🇸" },
-  { id: "soccer/ger.1", label: "Bundesliga", flag: "🇩🇪" },
-  { id: "soccer/ita.1", label: "Serie A", flag: "🇮🇹" },
-  { id: "soccer/fra.1", label: "Ligue 1", flag: "🇫🇷" },
-  { id: "soccer/uefa.champions", label: "Champions League", flag: "🏆" },
-] as const;
-
-export type NewsLeagueId = (typeof NEWS_LEAGUES)[number]["id"];
-
-const NEWS_PAGE_SIZE = 6;
-
-export async function getFootballNews(
-  league: NewsLeagueId = "soccer/eng.1",
-  page: number = 1,
-): Promise<{ articles: EspnNewsItem[]; hasMore: boolean }> {
-  try {
-    // ESPN doesn't support offset, so we fetch enough and slice
-    const needed = page * NEWS_PAGE_SIZE;
-    const response = await fetch(
-      `${ESPN_API}/${league}/news?limit=${needed + 1}`,
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    const all: EspnNewsItem[] = data.articles || [];
-    const start = (page - 1) * NEWS_PAGE_SIZE;
-    const articles = all.slice(start, start + NEWS_PAGE_SIZE);
-    const hasMore = all.length > needed;
-    return { articles, hasMore };
-  } catch (error) {
-    console.error("Error fetching football news:", error);
-    return { articles: [], hasMore: false };
-  }
+/** Ligas disponibles para noticias - Gestionadas desde el backend */
+export interface NewsLeague {
+  id: string;
+  label: string;
+  flag: string;
 }
 
+/** Configuración del backend */
+export interface FootballConfig {
+  defaultLeagueId: string;
+  defaultNewsLeague: string;
+  newsPageSize: number;
+}
+
+// --- API Functions ---
+
+/**
+ * Obtiene eventos de football por fecha
+ * @param date - Fecha en formato YYYY-MM-DD
+ */
+export async function getEventsByDate(date: string): Promise<SportsEvent[]> {
+  return api.get<SportsEvent[]>(
+    `/api/public/football?action=eventsByDate&date=${date}`,
+    false, // No requiere autenticación
+  );
+}
+
+/**
+ * Obtiene los partidos recientes
+ * @param leagueId - ID de la liga (opcional, usa el default del backend si no se especifica)
+ */
+export async function getRecentMatches(
+  leagueId?: string,
+): Promise<SportsEvent[]> {
+  const url = leagueId
+    ? `/api/public/football?action=recentMatches&leagueId=${leagueId}`
+    : `/api/public/football?action=recentMatches`;
+  return api.get<SportsEvent[]>(url, false);
+}
+
+/**
+ * Obtiene los próximos partidos
+ * @param leagueId - ID de la liga (opcional, usa el default del backend si no se especifica)
+ */
+export async function getUpcomingMatches(
+  leagueId?: string,
+): Promise<SportsEvent[]> {
+  const url = leagueId
+    ? `/api/public/football?action=upcomingMatches&leagueId=${leagueId}`
+    : `/api/public/football?action=upcomingMatches`;
+  return api.get<SportsEvent[]>(url, false);
+}
+
+/**
+ * Obtiene noticias de football de una liga específica
+ * @param league - ID de la liga (ej: 'soccer/eng.1'). Usa getNewsLeagues() para obtener las ligas disponibles
+ * @param page - Número de página (por defecto 1)
+ */
+export async function getFootballNews(
+  league?: string,
+  page: number = 1,
+): Promise<{ articles: EspnNewsItem[]; hasMore: boolean }> {
+  const url = league
+    ? `/api/public/football?action=news&league=${league}&page=${page}`
+    : `/api/public/football?action=news&page=${page}`;
+  return api.get<{ articles: EspnNewsItem[]; hasMore: boolean }>(url, false);
+}
+
+/**
+ * Obtiene los marcadores en vivo
+ */
 export async function getLiveScores(): Promise<any[]> {
-  try {
-    const response = await fetch(`${ESPN_API}/soccer/eng.1/scoreboard`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    return (data.events || []).slice(0, 8);
-  } catch (error) {
-    console.error("Error fetching live scores:", error);
-    return [];
-  }
+  return api.get<any[]>(`/api/public/football?action=liveScores`, false);
+}
+
+/**
+ * Obtiene la lista de ligas disponibles para noticias
+ */
+export async function getNewsLeagues(): Promise<NewsLeague[]> {
+  return api.get<NewsLeague[]>(
+    `/api/public/football?action=newsLeagues`,
+    false,
+  );
+}
+
+/**
+ * Obtiene la configuración general del backend
+ * Incluye: defaultLeagueId, defaultNewsLeague, newsPageSize
+ */
+export async function getConfig(): Promise<FootballConfig> {
+  return api.get<FootballConfig>(`/api/public/football?action=config`, false);
 }

@@ -4,28 +4,29 @@ import {
   getUpcomingMatches,
   getFootballNews,
   getLiveScores,
-  type NewsLeagueId,
+  getNewsLeagues,
+  getConfig,
 } from "../services/football.service";
 
 const STALE = 1000 * 60 * 5; // 5 minutos (datos externos cambian menos)
 
-export function useRecentMatches() {
+export function useRecentMatches(leagueId?: string) {
   return useQuery({
-    queryKey: ["football", "recent"],
-    queryFn: getRecentMatches,
+    queryKey: ["football", "recent", leagueId],
+    queryFn: () => getRecentMatches(leagueId),
     staleTime: STALE,
   });
 }
 
-export function useUpcomingMatches() {
+export function useUpcomingMatches(leagueId?: string) {
   return useQuery({
-    queryKey: ["football", "upcoming"],
-    queryFn: getUpcomingMatches,
+    queryKey: ["football", "upcoming", leagueId],
+    queryFn: () => getUpcomingMatches(leagueId),
     staleTime: STALE,
   });
 }
 
-export function useFootballNews(league: NewsLeagueId = "soccer/eng.1") {
+export function useFootballNews(league?: string) {
   return useInfiniteQuery({
     queryKey: ["football", "news", league],
     queryFn: ({ pageParam = 1 }) => getFootballNews(league, pageParam),
@@ -33,6 +34,22 @@ export function useFootballNews(league: NewsLeagueId = "soccer/eng.1") {
       lastPage.hasMore ? (lastPageParam as number) + 1 : undefined,
     initialPageParam: 1,
     staleTime: STALE,
+  });
+}
+
+export function useNewsLeagues() {
+  return useQuery({
+    queryKey: ["football", "newsLeagues"],
+    queryFn: getNewsLeagues,
+    staleTime: STALE * 6, // 30 minutos (las ligas cambian muy raramente)
+  });
+}
+
+export function useFootballConfig() {
+  return useQuery({
+    queryKey: ["football", "config"],
+    queryFn: getConfig,
+    staleTime: STALE * 6, // 30 minutos (la config cambia muy raramente)
   });
 }
 
