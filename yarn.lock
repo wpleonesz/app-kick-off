@@ -310,6 +310,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@capacitor/geolocation@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "@capacitor/geolocation@npm:8.1.0"
+  dependencies:
+    "@capacitor/synapse": ^1.0.4
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 01f4372d723047a3f7aa11481be377a145dad4f32ce62f4dab889ca1823fe34fbd9eefd5fd4106bc9a44bc36bdd899263f34c9827e4590fd483ea5d45dfb96b2
+  languageName: node
+  linkType: hard
+
 "@capacitor/ios@npm:^3.0.0":
   version: 3.9.0
   resolution: "@capacitor/ios@npm:3.9.0"
@@ -352,6 +363,13 @@ __metadata:
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
   checksum: f220aa45eb680f39f9549f813eb5952c20f4040a9a01a98ea8d7108a250dd80366fc1a7c1a7eddf6a4d44f9f044266c5c54bb28ee5eef0a6e8ee0fd5fb93d193
+  languageName: node
+  linkType: hard
+
+"@capacitor/synapse@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "@capacitor/synapse@npm:1.0.4"
+  checksum: 9d18020508eba8d68f6687abd02c82217dfe36ccd31633b3cf9f00febeffdae9067734c1d3183e5bcd76a3939130fe0d7dae45030bcb8de6bbad30bc2608d17a
   languageName: node
   linkType: hard
 
@@ -774,6 +792,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-leaflet/core@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@react-leaflet/core@npm:3.0.0"
+  peerDependencies:
+    leaflet: ^1.9.0
+    react: ^19.0.0
+    react-dom: ^19.0.0
+  checksum: 38abc98bbf8c08bafa01fe83bd74e3142d250de42c08f7b1f981c96e6396a252e41e65c78331c413642e08ed943945a22c853946a9c3133749e7d6c97d234d11
+  languageName: node
+  linkType: hard
+
 "@rolldown/pluginutils@npm:1.0.0-beta.27":
   version: 1.0.0-beta.27
   resolution: "@rolldown/pluginutils@npm:1.0.0-beta.27"
@@ -1129,10 +1158,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/geojson@npm:*":
+  version: 7946.0.16
+  resolution: "@types/geojson@npm:7946.0.16"
+  checksum: d66e5e023f43b3e7121448117af1930af7d06410a32a585a8bc9c6bb5d97e0d656cd93d99e31fa432976c32e98d4b780f82bf1fd1acd20ccf952eb6b8e39edf2
+  languageName: node
+  linkType: hard
+
 "@types/history@npm:^4.7.11":
   version: 4.7.11
   resolution: "@types/history@npm:4.7.11"
   checksum: c92e2ba407dcab0581a9afdf98f533aa41b61a71133420a6d92b1ca9839f741ab1f9395b17454ba5b88cb86020b70b22d74a1950ccfbdfd9beeaa5459fdc3464
+  languageName: node
+  linkType: hard
+
+"@types/leaflet@npm:^1.9.21":
+  version: 1.9.21
+  resolution: "@types/leaflet@npm:1.9.21"
+  dependencies:
+    "@types/geojson": "*"
+  checksum: 247f6492add1af10beabb410d2f7d6d272d0ffdbc96d2ad57175bbefcc6adf36e45dc44bbd9e3b736a7d7cea0ee2198ea364bf752db7f00ecffddc1996798fe1
   languageName: node
   linkType: hard
 
@@ -1270,6 +1315,7 @@ __metadata:
     "@capacitor/app": ^8.0.0
     "@capacitor/cli": ^8.0.0
     "@capacitor/core": ^8.0.0
+    "@capacitor/geolocation": ^8.1.0
     "@capacitor/ios": ^8.0.0
     "@capacitor/preferences": ^8.0.0
     "@capacitor/splash-screen": ^8.0.0
@@ -1281,15 +1327,18 @@ __metadata:
     "@ionic/react-router": ^7.0.0
     "@ionic/storage": ^4.0.0
     "@tanstack/react-query": ^5.90.18
+    "@types/leaflet": ^1.9.21
     "@types/react": ^18.0.0
     "@types/react-dom": ^18.0.0
     "@types/react-router-dom": 5
     "@vitejs/plugin-react": ^4.0.0
     history: ^5.3.0
     ionicons: ^8.0.13
+    leaflet: ^1.9.4
     react: ^18.2.0
     react-dom: ^18.2.0
     react-hook-form: ^7.71.1
+    react-leaflet: ^5.0.0
     react-router: 5
     react-router-dom: 5
     typescript: ^5.0.0
@@ -1949,6 +1998,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"leaflet@npm:^1.9.4":
+  version: 1.9.4
+  resolution: "leaflet@npm:1.9.4"
+  checksum: bfc79f17a247b37b92d84b3c78702501603392d6589fde606de4a825d11f1609d90225388834f2e0709dac327e52dcd4b4b9cc9fd3d590060c5b1e53b84fa6c6
+  languageName: node
+  linkType: hard
+
 "lie@npm:3.1.1":
   version: 3.1.1
   resolution: "lie@npm:3.1.1"
@@ -2344,6 +2400,19 @@ __metadata:
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: f7a19ac3496de32ca9ae12aa030f00f14a3d45374f1ceca0af707c831b2a6098ef0d6bdae51bd437b0a306d7f01d4677fcc8de7c0d331eb47ad0f46130e53c5f
+  languageName: node
+  linkType: hard
+
+"react-leaflet@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "react-leaflet@npm:5.0.0"
+  dependencies:
+    "@react-leaflet/core": ^3.0.0
+  peerDependencies:
+    leaflet: ^1.9.0
+    react: ^19.0.0
+    react-dom: ^19.0.0
+  checksum: 830a48bacca1553b29f0a22a6aeb4590541d4c7a36cceb4653363edeec880d76f2418e487b20e3840097fea19cc8c53a1295eeb4f72212822c51dc0641c92db8
   languageName: node
   linkType: hard
 

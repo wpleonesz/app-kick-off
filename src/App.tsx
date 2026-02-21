@@ -22,7 +22,14 @@ import { Route, Redirect } from "react-router-dom";
 // por desajustes de tipos entre dependencias. Revisar más adelante.
 const RouteComp: any = Route as any;
 const RedirectComp: any = Redirect as any;
-import { home, homeOutline, person, personOutline } from "ionicons/icons";
+import {
+  home,
+  homeOutline,
+  person,
+  personOutline,
+  footballOutline,
+  football,
+} from "ionicons/icons";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { Capacitor } from "@capacitor/core";
@@ -33,6 +40,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import Courts from "./pages/Courts";
 import { authService } from "./services/auth.service";
 import { initStorage } from "./storage";
 import { updateService } from "./services/update.service";
@@ -43,7 +51,7 @@ import SideMenu from "./components/SideMenu";
 // Usa onIonTabsWillChange (evento nativo de Ionic) para saber qué tab está
 // activo y swappear entre íconos filled/outline. El color lo maneja la CSS
 // variable --color-selected del IonTabBar.
-const TABS = ["inicio", "perfil"] as const;
+const TABS = ["inicio", "canchas", "perfil"] as const;
 
 const TabsSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("inicio");
@@ -57,6 +65,7 @@ const TabsSection: React.FC = () => {
       <IonTabs onIonTabsWillChange={(e) => setActiveTab(e.detail.tab)}>
         <IonRouterOutlet>
           <RouteComp exact path="/tabs/inicio" component={Home} />
+          <RouteComp exact path="/tabs/canchas" component={Courts} />
           <RouteComp exact path="/tabs/perfil" component={Profile} />
           <RouteComp exact path="/tabs">
             <RedirectComp to="/tabs/inicio" />
@@ -66,6 +75,12 @@ const TabsSection: React.FC = () => {
           <IonTabButton tab="inicio" href="/tabs/inicio">
             <IonIcon icon={activeTab === "inicio" ? home : homeOutline} />
             <IonLabel>Inicio</IonLabel>
+          </IonTabButton>
+          <IonTabButton tab="canchas" href="/tabs/canchas">
+            <IonIcon
+              icon={activeTab === "canchas" ? football : footballOutline}
+            />
+            <IonLabel>Canchas</IonLabel>
           </IonTabButton>
           <IonTabButton tab="perfil" href="/tabs/perfil">
             <IonIcon icon={activeTab === "perfil" ? person : personOutline} />
