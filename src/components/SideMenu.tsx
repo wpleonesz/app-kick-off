@@ -30,16 +30,47 @@ import {
   logOutOutline,
   footballOutline,
   chevronForwardOutline,
+  businessOutline,
+  peopleOutline,
+  shieldCheckmarkOutline,
 } from "ionicons/icons";
+import type { RoleCode } from "../hooks/useUserRole";
 import { Capacitor } from "@capacitor/core";
 import { authService } from "../services/auth.service";
 import { useProfile } from "../hooks/useRealtimeData";
+import { useUserRole } from "../hooks/useUserRole";
 import { useAppToast } from "../hooks/useAppToast";
 import { AppToast } from "./common/AppToast";
 
-/* ── Menu items ── */
-const MENU_ITEMS = [
+/* ── Menu items con control de acceso por rol ── */
+interface MenuItem {
+  icon: string;
+  label: string;
+  path?: string;
+  action?: string;
+  roles?: RoleCode[]; // Si no se define, visible para todos
+}
+
+const MENU_ITEMS: MenuItem[] = [
   { icon: personOutline, label: "Mi Perfil", path: "/tabs/perfil" },
+  {
+    icon: businessOutline,
+    label: "Gestión de Canchas",
+    path: "/tabs/canchas",
+    roles: ["owner", "administrator"],
+  },
+  {
+    icon: peopleOutline,
+    label: "Gestión de Usuarios",
+    action: "users",
+    roles: ["administrator"],
+  },
+  {
+    icon: shieldCheckmarkOutline,
+    label: "Administración",
+    action: "admin",
+    roles: ["administrator"],
+  },
   { icon: settingsOutline, label: "Configuración", action: "settings" },
   {
     icon: notificationsOutline,
@@ -51,6 +82,7 @@ const MENU_ITEMS = [
 
 const SideMenu: React.FC = () => {
   const { data: user } = useProfile();
+  const { hasAnyRole } = useUserRole();
   const { toast, showError, showSuccess, dismissToast } = useAppToast();
   const [presentAlert] = useIonAlert();
   const [isDarkMode, setIsDarkMode] = useState(
@@ -103,8 +135,19 @@ const SideMenu: React.FC = () => {
       case "saved":
         showSuccess("No tienes elementos guardados");
         break;
+      case "users":
+        showSuccess("Gestión de usuarios próximamente");
+        break;
+      case "admin":
+        showSuccess("Panel de administración próximamente");
+        break;
     }
   };
+
+  // Filtrar items según el rol del usuario
+  const visibleMenuItems = MENU_ITEMS.filter(
+    (item) => !item.roles || hasAnyRole(item.roles),
+  );
 
   const confirmLogout = () => {
     presentAlert({
@@ -202,7 +245,7 @@ const SideMenu: React.FC = () => {
 
         {/* ── Menu Items ── */}
         <IonList lines="none" className="fb-menu-list">
-          {MENU_ITEMS.map((item) => (
+          {visibleMenuItems.map((item) => (
             <IonMenuToggle key={item.label} autoHide={false}>
               <IonItem
                 button

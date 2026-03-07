@@ -68,12 +68,20 @@ import { ScheduleListCard } from "../components/courts/ScheduleListCard";
 import type { Court, CourtSchedule } from "../interfaces";
 import type { CourtFormData } from "../schemas/court.schemas";
 import type { CourtScheduleFormData } from "../schemas/courtSchedule.schemas";
+import { useUserRole } from "../hooks/useUserRole";
+import RoleGuard from "../components/common/RoleGuard";
 
 type ViewMode = "auth" | "public";
 
 const Courts: React.FC = () => {
+  // ── RBAC ──
+  const { can, isOwnerOrAdmin } = useUserRole();
+  const canManageCourts = can("courts.create");
+
   // ── Estado ──
-  const [viewMode, setViewMode] = useState<ViewMode>("auth");
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    canManageCourts ? "auth" : "public",
+  );
   const [searchText, setSearchText] = useState("");
   const [editingCourt, setEditingCourt] = useState<Court | null>(null);
   const [selectedCourtId, setSelectedCourtId] = useState<number | null>(null);
@@ -320,43 +328,45 @@ const Courts: React.FC = () => {
           </IonButtons>
         </IonToolbar>
 
-        {/* Segmento Auth / Público */}
-        <IonToolbar
-          style={{
-            "--background": "var(--ion-toolbar-background)",
-            "--border-width": "0",
-            paddingBottom: "4px",
-          }}
-        >
-          <IonSegment
-            value={viewMode}
-            onIonChange={(e) => {
-              const val = e.detail.value;
-              if (val === "auth" || val === "public") {
-                setViewMode(val);
-                setSearchText("");
-              }
-            }}
-            mode="ios"
+        {/* Segmento Auth / Público (solo visible para owner/admin) */}
+        {canManageCourts && (
+          <IonToolbar
             style={{
-              maxWidth: "340px",
-              margin: "0 auto",
-              "--background": "var(--ion-color-light)",
-              borderRadius: "10px",
+              "--background": "var(--ion-toolbar-background)",
+              "--border-width": "0",
+              paddingBottom: "4px",
             }}
           >
-            <IonSegmentButton value="auth">
-              <IonLabel style={{ fontSize: "13px", fontWeight: 600 }}>
-                Mis Canchas
-              </IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="public">
-              <IonLabel style={{ fontSize: "13px", fontWeight: 600 }}>
-                Públicas
-              </IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </IonToolbar>
+            <IonSegment
+              value={viewMode}
+              onIonChange={(e) => {
+                const val = e.detail.value;
+                if (val === "auth" || val === "public") {
+                  setViewMode(val);
+                  setSearchText("");
+                }
+              }}
+              mode="ios"
+              style={{
+                maxWidth: "340px",
+                margin: "0 auto",
+                "--background": "var(--ion-color-light)",
+                borderRadius: "10px",
+              }}
+            >
+              <IonSegmentButton value="auth">
+                <IonLabel style={{ fontSize: "13px", fontWeight: 600 }}>
+                  Mis Canchas
+                </IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="public">
+                <IonLabel style={{ fontSize: "13px", fontWeight: 600 }}>
+                  Públicas
+                </IonLabel>
+              </IonSegmentButton>
+            </IonSegment>
+          </IonToolbar>
+        )}
       </IonHeader>
 
       <IonContent fullscreen>
@@ -461,7 +471,7 @@ const Courts: React.FC = () => {
               <p style={{ margin: 0, fontSize: "14px" }}>
                 {searchText.trim()
                   ? "Intenta con otro término de búsqueda"
-                  : viewMode === "auth"
+                  : viewMode === "auth" && canManageCourts
                     ? "Toca + para agregar tu primera cancha"
                     : "Aún no hay canchas públicas disponibles"}
               </p>
@@ -471,22 +481,26 @@ const Courts: React.FC = () => {
 
         {/* Lista de canchas */}
         {!isLoading &&
-          filteredCourts.map((court) => (
-            <CourtCard
-              key={court.id}
-              court={court}
-              onEdit={viewMode === "auth" ? handleEdit : undefined}
-              onDelete={viewMode === "auth" ? handleDelete : undefined}
-              onView={handleViewDetail}
-              showActions={viewMode === "auth"}
-            />
-          ))}
+          filteredCourts.map((court) => {
+            const courtEditable =
+              viewMode === "auth" && isOwnerOrAdmin(court.userId);
+            return (
+              <CourtCard
+                key={court.id}
+                court={court}
+                onEdit={courtEditable ? handleEdit : undefined}
+                onDelete={courtEditable ? handleDelete : undefined}
+                onView={handleViewDetail}
+                showActions={courtEditable}
+              />
+            );
+          })}
 
         {/* Espacio inferior para FAB */}
         <div style={{ height: "80px" }} />
 
-        {/* FAB para crear (solo en modo auth) — dentro de IonContent con slot="fixed" */}
-        {viewMode === "auth" && (
+        {/* FAB para crear (solo owner/admin en modo auth) */}
+        {canManageCourts && viewMode === "auth" && (
           <IonFab vertical="bottom" horizontal="end" slot="fixed">
             <IonFabButton onClick={handleCreate}>
               <IonIcon icon={addOutline} />
@@ -673,7 +687,7 @@ const Courts: React.FC = () => {
                 courtName={selectedCourt.name}
                 schedules={courtSchedules ?? []}
                 isLoading={loadingSchedules}
-                isOwner={selectedCourt.userId === userId}
+                isOwner={isOwnerOrAdmin(selectedCourt.userId)}
                 onAdd={() =>
                   handleScheduleAdd(selectedCourt.id, selectedCourt.name)
                 }
