@@ -58,6 +58,11 @@ import {
   useUpdateCourtSchedule,
   useDeleteCourtSchedule,
 } from "../hooks/useCourtSchedules";
+import {
+  useBookingsByCourtId,
+  useCreateBooking,
+  useCancelBooking,
+} from "../hooks/useBookings";
 import { useProfile } from "../hooks/useRealtimeData";
 import { useAppToast } from "../hooks/useAppToast";
 import { AppToast } from "../components/common/AppToast";
@@ -65,10 +70,15 @@ import { CourtCard } from "../components/courts/CourtCard";
 import { CourtFormContent } from "../components/courts/CourtFormModal";
 import { ScheduleFormContent } from "../components/courts/ScheduleFormContent";
 import { ScheduleListCard } from "../components/courts/ScheduleListCard";
-import type { Court, CourtSchedule } from "../interfaces";
+import { BookingListCard } from "../components/courts/BookingListCard";
+import { BookingFormContent } from "../components/courts/BookingFormContent";
+import { RouteMapViewer } from "../components/courts/RouteMapViewer";
+import type { Court, CourtSchedule, Booking } from "../interfaces";
 import type { CourtFormData } from "../schemas/court.schemas";
 import type { CourtScheduleFormData } from "../schemas/courtSchedule.schemas";
+import type { BookingFormData } from "../schemas/booking.schemas";
 import { useUserRole } from "../hooks/useUserRole";
+import { useGeolocation } from "../hooks/useGeolocation";
 import RoleGuard from "../components/common/RoleGuard";
 
 type ViewMode = "auth" | "public";
@@ -91,12 +101,23 @@ const Courts: React.FC = () => {
   );
   const [scheduleCourtId, setScheduleCourtId] = useState<number | null>(null);
   const [scheduleCourtName, setScheduleCourtName] = useState<string>("");
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [presentAlert] = useIonAlert();
+
+  // ── Geolocalización del usuario (para ruta a la cancha) ──
+  const {
+    latitude: userLat,
+    longitude: userLng,
+    loading: geoLoading,
+    error: geoError,
+    getCurrentPosition,
+  } = useGeolocation();
 
   // ── Refs para modales (API imperativa — más confiable dentro de IonTabs) ──
   const formModalRef = useRef<HTMLIonModalElement>(null);
   const detailModalRef = useRef<HTMLIonModalElement>(null);
   const scheduleModalRef = useRef<HTMLIonModalElement>(null);
+  const bookingModalRef = useRef<HTMLIonModalElement>(null);
 
   // ── Queries ──
   const { data: user } = useProfile();
@@ -125,6 +146,12 @@ const Courts: React.FC = () => {
   const createScheduleMutation = useCreateCourtSchedule();
   const updateScheduleMutation = useUpdateCourtSchedule();
   const deleteScheduleMutation = useDeleteCourtSchedule();
+
+  // ── Bookings ──
+  const { data: courtBookings, isLoading: loadingBookings } =
+    useBookingsByCourtId(selectedCourtId ?? undefined);
+  const createBookingMutation = useCreateBooking();
+  const cancelBookingMutation = useCancelBooking();
 
   // ── Toast ──
   const { toast, showError, showSuccess, dismissToast } = useAppToast();
@@ -310,6 +337,54 @@ const Courts: React.FC = () => {
       }
       scheduleModalRef.current?.dismiss();
       setEditingSchedule(null);
+    } catch (error) {
+      showError(error);
+    }
+  };
+
+  // ── Booking Handlers ──
+  const canBookCourts = can("bookings.create");
+  const isBookingSubmitting = createBookingMutation.isPending;
+
+  const handleBookingAdd = () => {
+    bookingModalRef.current?.present();
+  };
+
+  const handleBookingCancel = (booking: Booking) => {
+    presentAlert({
+      header: "Cancelar Reserva",
+      message: "¿Estás seguro de cancelar esta reserva?",
+      buttons: [
+        { text: "No", role: "cancel" },
+        {
+          text: "Sí, cancelar",
+          role: "destructive",
+          handler: async () => {
+            try {
+              await cancelBookingMutation.mutateAsync(booking.id);
+              showSuccess("Reserva cancelada correctamente");
+            } catch (error) {
+              showError(error);
+            }
+          },
+        },
+      ],
+    });
+  };
+
+  const handleBookingFormSubmit = async (data: BookingFormData) => {
+    try {
+      await createBookingMutation.mutateAsync({
+        courtId: data.courtId,
+        scheduleId: data.scheduleId,
+        userId: data.userId,
+        date: data.date,
+        notes: data.notes,
+        requiresReferee: data.requiresReferee,
+        refereeId: data.refereeId,
+      });
+      showSuccess("Reserva creada correctamente");
+      bookingModalRef.current?.dismiss();
     } catch (error) {
       showError(error);
     }
@@ -512,7 +587,11 @@ const Courts: React.FC = () => {
       {/* ── Modal Detalle (imperativo via ref) ── */}
       <IonModal
         ref={detailModalRef}
-        onDidDismiss={() => setSelectedCourtId(null)}
+        onDidPresent={() => setDetailModalVisible(true)}
+        onDidDismiss={() => {
+          setSelectedCourtId(null);
+          setDetailModalVisible(false);
+        }}
       >
         <IonHeader>
           <IonToolbar>
@@ -682,6 +761,32 @@ const Courts: React.FC = () => {
                 </IonCardContent>
               </IonCard>
 
+              {/* ── Ruta al mapa (solo si la cancha tiene coordenadas) ── */}
+              {selectedCourt.latitude != null &&
+                selectedCourt.longitude != null && (
+                  <IonCard
+                    style={{
+                      borderRadius: "16px",
+                      boxShadow: "0 2px 12px rgba(0,0,0,.08)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <IonCardContent>
+                      <RouteMapViewer
+                        courtLat={selectedCourt.latitude}
+                        courtLng={selectedCourt.longitude}
+                        courtName={selectedCourt.name}
+                        userLat={userLat}
+                        userLng={userLng}
+                        userLoading={geoLoading}
+                        userError={geoError}
+                        onDetectLocation={getCurrentPosition}
+                        visible={detailModalVisible}
+                      />
+                    </IonCardContent>
+                  </IonCard>
+                )}
+
               {/* ── Horarios de la cancha ── */}
               <ScheduleListCard
                 courtName={selectedCourt.name}
@@ -694,6 +799,18 @@ const Courts: React.FC = () => {
                 onEdit={handleScheduleEdit}
                 onDelete={handleScheduleDelete}
                 onToggleActive={handleScheduleToggleActive}
+              />
+
+              {/* ── Reservas de la cancha ── */}
+              <BookingListCard
+                courtName={selectedCourt.name}
+                bookings={courtBookings ?? []}
+                isLoading={loadingBookings}
+                canBook={canBookCourts && selectedCourt.active}
+                currentUserId={userId}
+                isOwner={isOwnerOrAdmin(selectedCourt.userId)}
+                onBook={handleBookingAdd}
+                onCancel={handleBookingCancel}
               />
             </>
           )}
@@ -742,6 +859,21 @@ const Courts: React.FC = () => {
           courtName={scheduleCourtName}
           isSubmitting={isScheduleSubmitting}
         />
+      </IonModal>
+
+      {/* ── Modal Reserva (crear) ── */}
+      <IonModal ref={bookingModalRef}>
+        {selectedCourtId && selectedCourt && (
+          <BookingFormContent
+            onDismiss={() => bookingModalRef.current?.dismiss()}
+            onSubmit={handleBookingFormSubmit}
+            courtId={selectedCourtId}
+            courtName={selectedCourt.name}
+            userId={userId}
+            schedules={courtSchedules ?? []}
+            isSubmitting={isBookingSubmitting}
+          />
+        )}
       </IonModal>
 
       <AppToast toast={toast} onDismiss={dismissToast} />

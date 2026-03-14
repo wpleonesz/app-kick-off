@@ -12,7 +12,6 @@ import {
   IonLabel,
   IonAlert,
   IonRow,
-  IonCol,
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { Route, Redirect } from "react-router-dom";
@@ -51,14 +50,8 @@ import SideMenu from "./components/SideMenu";
 // Usa onIonTabsWillChange (evento nativo de Ionic) para saber qué tab está
 // activo y swappear entre íconos filled/outline. El color lo maneja la CSS
 // variable --color-selected del IonTabBar.
-const TABS = ["inicio", "canchas", "perfil"] as const;
-
 const TabsSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("inicio");
-  const activeIndex = Math.max(
-    0,
-    TABS.indexOf(activeTab as (typeof TABS)[number]),
-  );
 
   return (
     <>
@@ -88,14 +81,6 @@ const TabsSection: React.FC = () => {
           </IonTabButton>
         </IonTabBar>
       </IonTabs>
-
-      {/* Indicador deslizante de tab activo – fixed al fondo */}
-      <IonRow className="tab-indicator-track" aria-hidden="true">
-        <IonCol
-          className="tab-indicator-thumb"
-          style={{ transform: `translateX(${activeIndex * 100}%)` }}
-        />
-      </IonRow>
     </>
   );
 };

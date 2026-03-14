@@ -362,54 +362,35 @@ body.dark .fb-context-menu .action-sheet-button .action-sheet-icon {
   color: #e4e6eb !important;
 }
 
-/* ── Indicador deslizante de tab activo (estilo Facebook) ── */
-.tab-indicator-track {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 44px;
-  height: 3px;
-  pointer-events: none;
-  z-index: 9999;
-  display: flex;
-  align-items: flex-end;
-  margin: 0;
-  padding: 0;
-  --ion-grid-column-padding: 0px;
+/* ── Indicador de tab activo (línea superior en el tab seleccionado) ── */
+ion-tab-button {
+  position: relative;
 }
 
-html.md .tab-indicator-track {
-  bottom: 44px;
-}
-
-.tab-indicator-thumb {
-  width: 50%;
-  display: flex;
-  justify-content: center;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-  padding: 0;
-  margin: 0;
-  flex: none;
-  max-width: 50%;
-  --ion-grid-column-padding: 0px;
-}
-
-.tab-indicator-thumb::after {
+ion-tab-button::before {
   content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
   width: 28px;
   height: 3px;
-  border-radius: 3px 3px 0 0;
+  border-radius: 0 0 3px 3px;
   background: #1877f2;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+ion-tab-button.tab-selected::before {
+  transform: translateX(-50%) scaleX(1);
 }
 
 @media (prefers-color-scheme: dark) {
-  .tab-indicator-thumb::after {
+  ion-tab-button::before {
     background: #2d88ff;
   }
 }
 
-body.dark .tab-indicator-thumb::after {
+body.dark ion-tab-button::before {
   background: #2d88ff;
 }
 
