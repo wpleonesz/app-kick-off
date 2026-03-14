@@ -21,6 +21,24 @@ interface RequestOptions {
   requiresAuth?: boolean;
 }
 
+// Logs HTTP detallados solo cuando se habilita explícitamente en .env
+const HTTP_DEBUG_ENABLED = import.meta.env.VITE_HTTP_DEBUG === "true";
+
+function sanitizeHeadersForLog(
+  headers: Record<string, string>,
+): Record<string, string> {
+  const sanitized = { ...headers };
+
+  if (sanitized.Authorization) {
+    sanitized.Authorization = "[REDACTED]";
+  }
+  if (sanitized.Cookie) {
+    sanitized.Cookie = "[REDACTED]";
+  }
+
+  return sanitized;
+}
+
 /**
  * Genera headers comunes para todas las peticiones
  */
@@ -92,7 +110,9 @@ async function handleResponse<T = any>(
           key: "session_cookie",
           value: cookieValue,
         });
-        console.debug("Cookie de sesión guardada:", cookieValue.substring(0, 30) + "...");
+        if (HTTP_DEBUG_ENABLED) {
+          console.debug("Cookie de sesión guardada");
+        }
       } catch (error) {
         console.warn("Error al guardar cookie:", error);
       }
@@ -178,7 +198,14 @@ async function request<T = any>(
   const url = buildUrl(endpoint);
 
   try {
-    console.debug("HTTP request:", { method, url, headers, body });
+    if (HTTP_DEBUG_ENABLED) {
+      console.debug("HTTP request:", {
+        method,
+        url,
+        headers: sanitizeHeadersForLog(headers),
+        hasBody: body != null,
+      });
+    }
     const response = await CapacitorHttp.request({
       method,
       url,
@@ -189,11 +216,12 @@ async function request<T = any>(
       },
     });
 
-    console.debug("HTTP response:", {
-      status: response.status,
-      headers: response.headers,
-      data: response.data,
-    });
+    if (HTTP_DEBUG_ENABLED) {
+      console.debug("HTTP response:", {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
 
     return handleResponse<T>(response, method, url);
   } catch (error) {

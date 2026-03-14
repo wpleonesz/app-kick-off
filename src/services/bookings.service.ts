@@ -14,26 +14,26 @@ export async function getBookings(): Promise<Booking[]> {
 }
 
 /**
- * Lista reservas filtradas por cancha
- * GET /api/courts/bookings?filter=... — requiere auth
+ * Lista reservas filtradas por cancha (filtrado client-side)
+ * GET /api/courts/bookings — requiere auth
  */
 export async function getBookingsByCourtId(
   courtId: number,
 ): Promise<Booking[]> {
-  const filter = JSON.stringify({ courtId, active: true });
-  return api.get<Booking[]>(
-    `/api/courts/bookings?filter=${encodeURIComponent(filter)}`,
+  const all = await api.get<Booking[]>("/api/courts/bookings");
+  return (all ?? []).filter(
+    (b) => b.courtId === courtId && b.active,
   );
 }
 
 /**
- * Lista reservas del usuario actual
- * GET /api/courts/bookings?filter=... — requiere auth
+ * Lista reservas del usuario actual (filtrado client-side)
+ * GET /api/courts/bookings — requiere auth
  */
 export async function getMyBookings(userId: number): Promise<Booking[]> {
-  const filter = JSON.stringify({ userId, active: true });
-  return api.get<Booking[]>(
-    `/api/courts/bookings?filter=${encodeURIComponent(filter)}`,
+  const all = await api.get<Booking[]>("/api/courts/bookings");
+  return (all ?? []).filter(
+    (b) => b.userId === userId && b.active,
   );
 }
 

@@ -20,6 +20,7 @@ import {
   timeOutline,
   calendarOutline,
   timerOutline,
+  peopleOutline,
 } from "ionicons/icons";
 import type { CourtSchedule } from "../../interfaces";
 import { getDayName } from "../../interfaces/courtSchedule";
@@ -27,6 +28,7 @@ import { getDayName } from "../../interfaces/courtSchedule";
 export interface ScheduleListCardProps {
   courtName: string;
   schedules: CourtSchedule[];
+  peopleCountBySchedule?: Record<number, number>;
   isLoading?: boolean;
   isOwner?: boolean;
   onAdd?: () => void;
@@ -41,6 +43,7 @@ export interface ScheduleListCardProps {
 export const ScheduleListCard: React.FC<ScheduleListCardProps> = ({
   courtName,
   schedules,
+  peopleCountBySchedule,
   isLoading = false,
   isOwner = false,
   onAdd,
@@ -152,6 +155,7 @@ export const ScheduleListCard: React.FC<ScheduleListCardProps> = ({
               <ScheduleRow
                 key={s.id}
                 schedule={s}
+                peopleCount={peopleCountBySchedule?.[s.id] ?? 0}
                 isOwner={isOwner}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -169,6 +173,7 @@ export const ScheduleListCard: React.FC<ScheduleListCardProps> = ({
 
 interface ScheduleRowProps {
   schedule: CourtSchedule;
+  peopleCount: number;
   isOwner: boolean;
   onEdit?: (s: CourtSchedule) => void;
   onDelete?: (s: CourtSchedule) => void;
@@ -177,6 +182,7 @@ interface ScheduleRowProps {
 
 const ScheduleRow: React.FC<ScheduleRowProps> = ({
   schedule,
+  peopleCount,
   isOwner,
   onEdit,
   onDelete,
@@ -232,6 +238,22 @@ const ScheduleRow: React.FC<ScheduleRowProps> = ({
           >
             {schedule.active ? "Activo" : "Inactivo"}
           </IonBadge>
+
+          <IonChip
+            style={{
+              margin: 0,
+              height: "24px",
+              fontSize: "12px",
+              fontWeight: 700,
+              "--background": "rgba(255, 196, 9, 0.18)",
+              "--color": "#7a4b00",
+            }}
+          >
+            <IonIcon icon={peopleOutline} style={{ marginRight: "4px" }} />
+            <IonLabel>
+              {peopleCount} {peopleCount === 1 ? "persona" : "personas"}
+            </IonLabel>
+          </IonChip>
         </div>
 
         <div

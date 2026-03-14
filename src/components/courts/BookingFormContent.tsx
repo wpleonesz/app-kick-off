@@ -49,8 +49,23 @@ function jsDateDayToBackend(jsDay: number): number {
   return jsDay === 0 ? 7 : jsDay;
 }
 
+function parseDateOnlyUTC(value: string): Date {
+  return new Date(`${value}T00:00:00Z`);
+}
+
 function getSpanishDayName(date: Date): string {
-  return date.toLocaleDateString("es-EC", { weekday: "long" });
+  return date.toLocaleDateString("es-EC", {
+    weekday: "long",
+    timeZone: "UTC",
+  });
+}
+
+function getLocalDateInputValue(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -122,9 +137,8 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
         dayMismatch: false,
       };
     }
-    const [y, m, d] = selectedDate.split("-").map(Number);
-    const dateObj = new Date(y, m - 1, d);
-    const backendDay = jsDateDayToBackend(dateObj.getDay());
+    const dateObj = parseDateOnlyUTC(selectedDate);
+    const backendDay = jsDateDayToBackend(dateObj.getUTCDay());
     const dayName = getSpanishDayName(dateObj);
     const filtered = activeSchedules.filter((s) => s.dayOfWeek === backendDay);
     return {
@@ -139,17 +153,17 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
     return activeSchedules.find((s) => s.id === selectedScheduleId) ?? null;
   }, [selectedScheduleId, activeSchedules]);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateInputValue();
 
   const formattedDate = useMemo(() => {
     if (!selectedDate) return "";
-    const [y, m, d] = selectedDate.split("-").map(Number);
-    const dateObj = new Date(y, m - 1, d);
+    const dateObj = parseDateOnlyUTC(selectedDate);
     return dateObj.toLocaleDateString("es-EC", {
       weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric",
+      timeZone: "UTC",
     });
   }, [selectedDate]);
 
@@ -158,9 +172,8 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
     setSubmitStatus("validating");
 
     if (data.date && data.scheduleId) {
-      const [y, m, d] = data.date.split("-").map(Number);
-      const dateObj = new Date(y, m - 1, d);
-      const backendDay = jsDateDayToBackend(dateObj.getDay());
+      const dateObj = parseDateOnlyUTC(data.date);
+      const backendDay = jsDateDayToBackend(dateObj.getUTCDay());
       const schedule = activeSchedules.find((s) => s.id === data.scheduleId);
       if (schedule && schedule.dayOfWeek !== backendDay) {
         const dayName = getSpanishDayName(dateObj);
@@ -265,7 +278,12 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                 key={day}
                 color="primary"
                 outline
-                style={{ height: "24px", margin: 0, fontSize: "11px", fontWeight: 600 }}
+                style={{
+                  height: "24px",
+                  margin: 0,
+                  fontSize: "11px",
+                  fontWeight: 600,
+                }}
               >
                 {day}
               </IonChip>
@@ -297,7 +315,11 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
             >
               <IonLabel
                 position="stacked"
-                style={{ fontSize: "13px", fontWeight: 600, marginBottom: "6px" }}
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  marginBottom: "6px",
+                }}
               >
                 Fecha de reserva <IonText color="primary">*</IonText>
               </IonLabel>
@@ -319,7 +341,10 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                 )}
               />
               {errors.date && (
-                <IonNote color="danger" style={{ fontSize: "12px", marginTop: "4px" }}>
+                <IonNote
+                  color="danger"
+                  style={{ fontSize: "12px", marginTop: "4px" }}
+                >
                   {errors.date.message}
                 </IonNote>
               )}
@@ -355,11 +380,16 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
               }}
             >
               <IonLabel
-                style={{ fontSize: "13px", fontWeight: 600, marginBottom: "6px", display: "block" }}
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  marginBottom: "6px",
+                  display: "block",
+                }}
               >
                 Horario <IonText color="primary">*</IonText>
               </IonLabel>
-              {(!selectedDate || dayMismatch) ? (
+              {!selectedDate || dayMismatch ? (
                 <div
                   style={{
                     ...inputStyle,
@@ -393,8 +423,8 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                     >
                       {schedulesForDay.map((s) => (
                         <IonSelectOption key={s.id} value={s.id}>
-                          {getDayName(s.dayOfWeek)} {s.startTime} - {s.endTime} (
-                          {s.duration}min)
+                          {getDayName(s.dayOfWeek)} {s.startTime} - {s.endTime}{" "}
+                          ({s.duration}min)
                         </IonSelectOption>
                       ))}
                     </IonSelect>
@@ -402,7 +432,10 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                 />
               )}
               {errors.scheduleId && (
-                <IonNote color="danger" style={{ fontSize: "12px", marginTop: "4px" }}>
+                <IonNote
+                  color="danger"
+                  style={{ fontSize: "12px", marginTop: "4px" }}
+                >
                   {errors.scheduleId.message}
                 </IonNote>
               )}
@@ -430,10 +463,13 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
             >
               <IonLabel
                 position="stacked"
-                style={{ fontSize: "13px", fontWeight: 600, marginBottom: "6px" }}
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  marginBottom: "6px",
+                }}
               >
-                Notas{" "}
-                <IonText color="medium">(opcional)</IonText>
+                Notas <IonText color="medium">(opcional)</IonText>
               </IonLabel>
               <Controller
                 name="notes"
@@ -504,13 +540,23 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
               style={{ "--border-radius": "10px", height: "48px" }}
             >
               {submitStatus === "validating" ? (
-                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <IonSpinner name="crescent" style={{ width: "18px", height: "18px" }} />
+                <span
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <IonSpinner
+                    name="crescent"
+                    style={{ width: "18px", height: "18px" }}
+                  />
                   Validando datos...
                 </span>
               ) : submitStatus === "sending" || isSubmitting ? (
-                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <IonSpinner name="crescent" style={{ width: "18px", height: "18px" }} />
+                <span
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <IonSpinner
+                    name="crescent"
+                    style={{ width: "18px", height: "18px" }}
+                  />
                   Procesando reserva...
                 </span>
               ) : (
@@ -580,7 +626,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
         </IonText>
       )}
       {message && (
-        <IonNote style={{ fontSize: "12px", color: `var(--ion-color-${color})` }}>
+        <IonNote
+          style={{ fontSize: "12px", color: `var(--ion-color-${color})` }}
+        >
           {message}
         </IonNote>
       )}

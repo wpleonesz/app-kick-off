@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import {
   IonPage,
   IonHeader,
@@ -345,6 +345,26 @@ const Courts: React.FC = () => {
   // ── Booking Handlers ──
   const canBookCourts = can("bookings.create");
   const isBookingSubmitting = createBookingMutation.isPending;
+
+  const peopleCountBySchedule = useMemo<Record<number, number>>(() => {
+    const usersBySchedule = new Map<number, Set<number>>();
+
+    (courtBookings ?? []).forEach((booking) => {
+      if (!booking.active || booking.status === "cancelled") return;
+
+      const scheduleUsers =
+        usersBySchedule.get(booking.scheduleId) ?? new Set<number>();
+      scheduleUsers.add(booking.userId);
+      usersBySchedule.set(booking.scheduleId, scheduleUsers);
+    });
+
+    const counts: Record<number, number> = {};
+    usersBySchedule.forEach((users, scheduleId) => {
+      counts[scheduleId] = users.size;
+    });
+
+    return counts;
+  }, [courtBookings]);
 
   const handleBookingAdd = () => {
     bookingModalRef.current?.present();
@@ -791,6 +811,7 @@ const Courts: React.FC = () => {
               <ScheduleListCard
                 courtName={selectedCourt.name}
                 schedules={courtSchedules ?? []}
+                peopleCountBySchedule={peopleCountBySchedule}
                 isLoading={loadingSchedules}
                 isOwner={isOwnerOrAdmin(selectedCourt.userId)}
                 onAdd={() =>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   IonPage,
   IonHeader,
@@ -28,6 +28,7 @@ import {
   IonCol,
   IonMenuButton,
   useIonAlert,
+  useIonActionSheet,
 } from "@ionic/react";
 import {
   personOutline,
@@ -38,14 +39,20 @@ import {
   logOutOutline,
   refreshOutline,
   atOutline,
-  menuOutline,
-  createOutline,
+  cameraOutline,
+  imagesOutline,
 } from "ionicons/icons";
 import { RefresherEventDetail } from "@ionic/core";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { authService } from "../services/auth.service";
-import { useProfile, useRefreshData } from "../hooks/useRealtimeData";
+import {
+  useProfile,
+  useRefreshData,
+  useUpdateProfile,
+} from "../hooks/useRealtimeData";
 import { useAppToast } from "../hooks/useAppToast";
 import { AppToast } from "../components/common/AppToast";
+import { API_BASE } from "../config";
 
 const ROLE_COLORS: Record<
   string,
@@ -89,11 +96,115 @@ const ROLE_COLORS: Record<
   },
 };
 
+function resolvePhotoUrl(photo?: string | null): string | null {
+  if (!photo) return null;
+
+  if (
+    photo.startsWith("data:") ||
+    photo.startsWith("blob:") ||
+    photo.startsWith("http://") ||
+    photo.startsWith("https://")
+  ) {
+    return photo;
+  }
+
+  const baseUrl = API_BASE.endsWith("/") ? API_BASE.slice(0, -1) : API_BASE;
+  const path = photo.startsWith("/") ? photo : `/${photo}`;
+  return `${baseUrl}${path}`;
+}
+
+function isCancelCameraError(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
+
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("cancel") ||
+    normalized.includes("canceled") ||
+    normalized.includes("cancelled")
+  );
+}
+
+function getBase64Bytes(dataUrl: string): number {
+  const base64 = dataUrl.split(",")[1] ?? "";
+  const padding =
+    (base64.endsWith("==") ? 2 : 0) || (base64.endsWith("=") ? 1 : 0);
+  return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+}
+
+function loadImage(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("No se pudo procesar la imagen"));
+    image.src = dataUrl;
+  });
+}
+
+async function compressImageToDataUrl(
+  sourceDataUrl: string,
+  maxBytes = 1_000_000,
+  maxDimension = 720,
+): Promise<string> {
+  const image = await loadImage(sourceDataUrl);
+
+  let width = image.width;
+  let height = image.height;
+  const biggestSide = Math.max(width, height);
+  if (biggestSide > maxDimension) {
+    const ratio = maxDimension / biggestSide;
+    width = Math.max(1, Math.round(width * ratio));
+    height = Math.max(1, Math.round(height * ratio));
+  }
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("No se pudo inicializar el procesador de imagen");
+  }
+
+  let quality = 0.82;
+  let result = sourceDataUrl;
+
+  for (let pass = 0; pass < 7; pass += 1) {
+    canvas.width = width;
+    canvas.height = height;
+    context.clearRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+
+    result = canvas.toDataURL("image/jpeg", quality);
+    if (getBase64Bytes(result) <= maxBytes) {
+      return result;
+    }
+
+    if (quality > 0.45) {
+      quality -= 0.1;
+    } else {
+      width = Math.max(128, Math.round(width * 0.85));
+      height = Math.max(128, Math.round(height * 0.85));
+    }
+  }
+
+  if (getBase64Bytes(result) > maxBytes) {
+    throw new Error(
+      "La foto es muy pesada. Intenta con una imagen mas pequena",
+    );
+  }
+
+  return result;
+}
+
 const Profile: React.FC = () => {
   const { data: user, isLoading, isError } = useProfile();
   const { refreshProfile } = useRefreshData();
+  const updateProfileMutation = useUpdateProfile();
   const { toast, showError, showSuccess, dismissToast } = useAppToast();
   const [presentAlert] = useIonAlert();
+  const [presentActionSheet] = useIonActionSheet();
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await refreshProfile();
@@ -148,6 +259,86 @@ const Profile: React.FC = () => {
   const email = user?.Person?.email || user?.email || "";
   const dni = user?.Person?.dni || user?.dni || "";
   const mobile = user?.Person?.mobile || user?.mobile || "";
+  const apiPhoto = useMemo(
+    () => resolvePhotoUrl(user?.Person?.photo ?? null),
+    [user?.Person?.photo],
+  );
+  const currentPhoto = apiPhoto;
+  const isUpdatingPhoto = updateProfileMutation.isPending;
+
+  const updateProfilePhoto = async (source: CameraSource) => {
+    try {
+      const photo = await Camera.getPhoto({
+        source,
+        quality: 85,
+        allowEditing: true,
+        resultType: CameraResultType.DataUrl,
+      });
+
+      const selectedPhoto = photo.dataUrl ?? null;
+      if (!selectedPhoto) {
+        throw new Error("No se pudo obtener la foto seleccionada");
+      }
+
+      const compressedPhoto = await compressImageToDataUrl(
+        selectedPhoto,
+        950_000,
+        720,
+      );
+
+      await updateProfileMutation.mutateAsync({
+        photo: compressedPhoto,
+      } as any);
+      await refreshProfile();
+      showSuccess("Foto de perfil actualizada");
+    } catch (error) {
+      if (isCancelCameraError(error)) return;
+      showError(error);
+    }
+  };
+
+  const clearProfilePhoto = async () => {
+    try {
+      await updateProfileMutation.mutateAsync({ photo: null } as any);
+      await refreshProfile();
+      showSuccess("Foto de perfil eliminada");
+    } catch (error) {
+      showError(error);
+    }
+  };
+
+  const openPhotoPicker = () => {
+    presentActionSheet({
+      header: "Foto de perfil",
+      buttons: [
+        {
+          text: "Tomar foto",
+          icon: cameraOutline,
+          handler: () => {
+            void updateProfilePhoto(CameraSource.Camera);
+          },
+        },
+        {
+          text: "Elegir de galería",
+          icon: imagesOutline,
+          handler: () => {
+            void updateProfilePhoto(CameraSource.Photos);
+          },
+        },
+        {
+          text: "Quitar foto",
+          role: "destructive",
+          handler: () => {
+            void clearProfilePhoto();
+          },
+        },
+        {
+          text: "Cancelar",
+          role: "cancel",
+        },
+      ],
+    });
+  };
 
   return (
     <IonPage>
@@ -233,14 +424,43 @@ const Profile: React.FC = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    overflow: "hidden",
                   }}
                 >
-                  <IonText
-                    style={{ fontSize: "2rem", fontWeight: 700, color: "#fff" }}
-                  >
-                    {getInitials(fullName || user.username)}
-                  </IonText>
+                  {currentPhoto ? (
+                    <img
+                      src={currentPhoto}
+                      alt="Foto de perfil"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <IonText
+                      style={{
+                        fontSize: "2rem",
+                        fontWeight: 700,
+                        color: "#fff",
+                      }}
+                    >
+                      {getInitials(fullName || user.username)}
+                    </IonText>
+                  )}
                 </IonAvatar>
+
+                <IonButton
+                  fill="clear"
+                  color="light"
+                  size="small"
+                  onClick={openPhotoPicker}
+                  disabled={isUpdatingPhoto}
+                  style={{ marginTop: "-2px" }}
+                >
+                  <IonIcon slot="start" icon={cameraOutline} />
+                  {isUpdatingPhoto ? "Guardando..." : "Cambiar foto"}
+                </IonButton>
 
                 <IonCardTitle
                   style={{
@@ -279,12 +499,11 @@ const Profile: React.FC = () => {
                       <IonButton
                         expand="block"
                         size="small"
-                        onClick={() =>
-                          showSuccess("Edición de perfil próximamente")
-                        }
+                        onClick={openPhotoPicker}
+                        disabled={isUpdatingPhoto}
                       >
-                        <IonIcon slot="start" icon={createOutline} />
-                        Editar Perfil
+                        <IonIcon slot="start" icon={cameraOutline} />
+                        {isUpdatingPhoto ? "Guardando..." : "Foto de Perfil"}
                       </IonButton>
                     </IonCol>
                     <IonCol size="auto">

@@ -23,6 +23,22 @@ import type { Booking } from "../../interfaces";
 import { BOOKING_STATUS, getBookingStatusColor } from "../../interfaces";
 import { getDayName } from "../../interfaces/courtSchedule";
 
+function normalizeToUtcDay(value: string): Date {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date(0);
+  }
+
+  return new Date(
+    Date.UTC(
+      parsed.getUTCFullYear(),
+      parsed.getUTCMonth(),
+      parsed.getUTCDate(),
+    ),
+  );
+}
+
 export interface BookingListCardProps {
   courtName: string;
   bookings: Booking[];
@@ -71,7 +87,8 @@ export const BookingListCard: React.FC<BookingListCardProps> = ({
 
   // Ordenar por fecha
   const sorted = [...activeBookings].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    (a, b) =>
+      normalizeToUtcDay(a.date).getTime() - normalizeToUtcDay(b.date).getTime(),
   );
 
   return (
@@ -177,10 +194,11 @@ const BookingRow: React.FC<BookingRowProps> = ({
   canCancel,
   onCancel,
 }) => {
-  const dateStr = new Date(booking.date).toLocaleDateString("es-EC", {
+  const dateStr = normalizeToUtcDay(booking.date).toLocaleDateString("es-EC", {
     weekday: "short",
     day: "numeric",
     month: "short",
+    timeZone: "UTC",
   });
 
   return (
@@ -258,8 +276,8 @@ const BookingRow: React.FC<BookingRowProps> = ({
                 gap: "4px",
               }}
             >
-              <IonIcon icon={personOutline} color="medium" />
-              @{booking.user.username}
+              <IonIcon icon={personOutline} color="medium" />@
+              {booking.user.username}
             </span>
           )}
         </div>
