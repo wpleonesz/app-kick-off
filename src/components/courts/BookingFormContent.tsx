@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   IonHeader,
   IonToolbar,
@@ -32,7 +32,7 @@ import {
   bookingSchema,
   type BookingFormData,
 } from "../../schemas/booking.schemas";
-import type { CourtSchedule } from "../../interfaces";
+import type { Booking, CourtSchedule, User } from "../../interfaces";
 import { getDayName } from "../../interfaces/courtSchedule";
 
 interface BookingFormContentProps {
@@ -42,6 +42,12 @@ interface BookingFormContentProps {
   courtName: string;
   userId: number;
   schedules: CourtSchedule[];
+  bookings: Booking[];
+  users?: User[];
+  canAssignUser?: boolean;
+  isUsersLoading?: boolean;
+  bookingToEdit?: Booking | null;
+  allowMultipleSchedules?: boolean;
   isSubmitting?: boolean;
 }
 
@@ -51,6 +57,22 @@ function jsDateDayToBackend(jsDay: number): number {
 
 function parseDateOnlyUTC(value: string): Date {
   return new Date(`${value}T00:00:00Z`);
+}
+
+function normalizeToUtcDay(value: string): Date {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date(0);
+  }
+
+  return new Date(
+    Date.UTC(
+      parsed.getUTCFullYear(),
+      parsed.getUTCMonth(),
+      parsed.getUTCDate(),
+    ),
+  );
 }
 
 function getSpanishDayName(date: Date): string {
@@ -65,6 +87,14 @@ function getLocalDateInputValue(): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toDateInputValue(value: string): string {
+  const date = normalizeToUtcDay(value);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -91,8 +121,15 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
   courtName,
   userId,
   schedules,
+  bookings,
+  users = [],
+  canAssignUser = false,
+  isUsersLoading = false,
+  bookingToEdit = null,
+  allowMultipleSchedules = true,
   isSubmitting = false,
 }) => {
+  const isEditMode = !!bookingToEdit;
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "validating" | "sending" | "success"
@@ -108,9 +145,31 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
     return days.map((d) => getDayName(d));
   }, [activeSchedules]);
 
+  const selectableUsers = useMemo(() => {
+    const cleaned = users
+      .filter((item) => item?.id && item.active !== false)
+      .map((item) => {
+        const displayName =
+          item.Person?.name ||
+          item.name ||
+          [item.firstName, item.lastName].filter(Boolean).join(" ") ||
+          item.username;
+        return {
+          id: item.id,
+          username: item.username,
+          email: item.email,
+          label: displayName,
+        };
+      });
+
+    return cleaned.sort((a, b) => a.label.localeCompare(b.label));
+  }, [users]);
+
   const {
     control,
     handleSubmit,
+    setValue,
+    reset,
     watch,
     formState: { errors },
   } = useForm<BookingFormData>({
@@ -118,7 +177,7 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
     defaultValues: {
       courtId,
       userId,
-      scheduleId: 0,
+      scheduleIds: [],
       date: "",
       notes: "",
       requiresReferee: false,
@@ -127,7 +186,32 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
   });
 
   const selectedDate = watch("date");
-  const selectedScheduleId = watch("scheduleId");
+  const selectedScheduleIds = watch("scheduleIds");
+
+  useEffect(() => {
+    if (!bookingToEdit) {
+      reset({
+        courtId,
+        userId,
+        scheduleIds: [],
+        date: "",
+        notes: "",
+        requiresReferee: false,
+        refereeId: null,
+      });
+      return;
+    }
+
+    reset({
+      courtId,
+      userId: bookingToEdit.userId,
+      scheduleIds: [bookingToEdit.scheduleId],
+      date: toDateInputValue(bookingToEdit.date),
+      notes: bookingToEdit.notes || "",
+      requiresReferee: !!bookingToEdit.requiresReferee,
+      refereeId: bookingToEdit.refereeId ?? null,
+    });
+  }, [bookingToEdit, courtId, userId, reset]);
 
   const { schedulesForDay, selectedDayName, dayMismatch } = useMemo(() => {
     if (!selectedDate) {
@@ -148,10 +232,49 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
     };
   }, [selectedDate, activeSchedules]);
 
-  const selectedSchedule = useMemo(() => {
-    if (!selectedScheduleId) return null;
-    return activeSchedules.find((s) => s.id === selectedScheduleId) ?? null;
-  }, [selectedScheduleId, activeSchedules]);
+  const occupiedScheduleIds = useMemo(() => {
+    if (!selectedDate) return new Set<number>();
+
+    const selectedUtcDay = normalizeToUtcDay(selectedDate).getTime();
+    const occupiedIds = bookings
+      .filter((booking) => {
+        if (!booking.active || booking.status === "cancelled") return false;
+        if (isEditMode && bookingToEdit && booking.id === bookingToEdit.id) {
+          return false;
+        }
+        return normalizeToUtcDay(booking.date).getTime() === selectedUtcDay;
+      })
+      .map((booking) => booking.scheduleId);
+
+    return new Set(occupiedIds);
+  }, [selectedDate, bookings, isEditMode, bookingToEdit]);
+
+  const availableSchedulesForDay = useMemo(
+    () =>
+      schedulesForDay.filter(
+        (schedule) => !occupiedScheduleIds.has(schedule.id),
+      ),
+    [schedulesForDay, occupiedScheduleIds],
+  );
+
+  const selectedSchedules = useMemo(
+    () =>
+      activeSchedules.filter((schedule) =>
+        (selectedScheduleIds ?? []).includes(schedule.id),
+      ),
+    [selectedScheduleIds, activeSchedules],
+  );
+
+  useEffect(() => {
+    if (!selectedScheduleIds?.length) return;
+    const availableIds = new Set(
+      availableSchedulesForDay.map((schedule) => schedule.id),
+    );
+    const filtered = selectedScheduleIds.filter((id) => availableIds.has(id));
+    if (filtered.length !== selectedScheduleIds.length) {
+      setValue("scheduleIds", filtered, { shouldValidate: true });
+    }
+  }, [selectedScheduleIds, availableSchedulesForDay, setValue]);
 
   const today = getLocalDateInputValue();
 
@@ -171,14 +294,19 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
     setApiError(null);
     setSubmitStatus("validating");
 
-    if (data.date && data.scheduleId) {
+    if (data.date && data.scheduleIds.length > 0) {
       const dateObj = parseDateOnlyUTC(data.date);
       const backendDay = jsDateDayToBackend(dateObj.getUTCDay());
-      const schedule = activeSchedules.find((s) => s.id === data.scheduleId);
-      if (schedule && schedule.dayOfWeek !== backendDay) {
+      const invalidSchedule = activeSchedules.find(
+        (schedule) =>
+          data.scheduleIds.includes(schedule.id) &&
+          schedule.dayOfWeek !== backendDay,
+      );
+
+      if (invalidSchedule) {
         const dayName = getSpanishDayName(dateObj);
         setApiError(
-          `El horario seleccionado es para ${getDayName(schedule.dayOfWeek)}, pero la fecha elegida cae ${dayName}. Selecciona una fecha que sea ${getDayName(schedule.dayOfWeek)} o elige un horario diferente.`,
+          `Uno de los horarios seleccionados es para ${getDayName(invalidSchedule.dayOfWeek)}, pero la fecha elegida cae ${dayName}. Selecciona una fecha que coincida con los horarios elegidos.`,
         );
         setSubmitStatus("idle");
         return;
@@ -212,6 +340,8 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
   const canSubmit =
     !isSubmitting &&
     activeSchedules.length > 0 &&
+    (isEditMode || availableSchedulesForDay.length > 0) &&
+    selectedScheduleIds.length > 0 &&
     submitStatus !== "sending" &&
     submitStatus !== "success";
 
@@ -224,7 +354,9 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
               <IonIcon icon={closeOutline} />
             </IonButton>
           </IonButtons>
-          <IonTitle>Nueva Reserva</IonTitle>
+          <IonTitle>
+            {bookingToEdit ? "Editar Reserva" : "Nueva Reserva"}
+          </IonTitle>
           <IonButtons slot="end">
             <IonButton
               strong
@@ -237,7 +369,7 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
               ) : (
                 <>
                   <IonIcon icon={saveOutline} slot="start" />
-                  Reservar
+                  {bookingToEdit ? "Guardar" : "Reservar"}
                 </>
               )}
             </IonButton>
@@ -303,6 +435,81 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
 
         {activeSchedules.length > 0 && (
           <form onSubmit={handleSubmit(wrappedSubmit)}>
+            {/* ── Fecha ── */}
+            {canAssignUser && (
+              <div style={{ marginBottom: "14px" }}>
+                <IonLabel
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    marginBottom: "6px",
+                    display: "block",
+                  }}
+                >
+                  Asignar reserva a usuario <IonText color="primary">*</IonText>
+                </IonLabel>
+
+                {isUsersLoading ? (
+                  <div
+                    style={{
+                      ...inputStyle,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <IonSpinner name="crescent" style={{ width: "16px" }} />
+                    Cargando usuarios...
+                  </div>
+                ) : (
+                  <Controller
+                    name="userId"
+                    control={control}
+                    render={({ field }) => (
+                      <IonSelect
+                        value={field.value > 0 ? field.value : undefined}
+                        onIonChange={(e) => {
+                          field.onChange(Number(e.detail.value));
+                          setApiError(null);
+                        }}
+                        interface="alert"
+                        placeholder="Selecciona un usuario"
+                        style={{
+                          width: "100%",
+                          ...inputStyle,
+                          padding: "8px 14px",
+                        }}
+                      >
+                        {selectableUsers.map((item) => (
+                          <IonSelectOption key={item.id} value={item.id}>
+                            {item.label} (@{item.username})
+                          </IonSelectOption>
+                        ))}
+                      </IonSelect>
+                    )}
+                  />
+                )}
+
+                {errors.userId && (
+                  <IonNote
+                    color="danger"
+                    style={{ fontSize: "12px", marginTop: "4px" }}
+                  >
+                    {errors.userId.message}
+                  </IonNote>
+                )}
+
+                {!isUsersLoading && selectableUsers.length === 0 && (
+                  <IonNote
+                    color="warning"
+                    style={{ fontSize: "12px", marginTop: "4px" }}
+                  >
+                    No se pudieron cargar usuarios para asignar la reserva.
+                  </IonNote>
+                )}
+              </div>
+            )}
+
             {/* ── Fecha ── */}
             <IonItem
               lines="none"
@@ -387,7 +594,7 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                   display: "block",
                 }}
               >
-                Horario <IonText color="primary">*</IonText>
+                Horarios <IonText color="primary">*</IonText>
               </IonLabel>
               {!selectedDate || dayMismatch ? (
                 <div
@@ -404,24 +611,39 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                 </div>
               ) : (
                 <Controller
-                  name="scheduleId"
+                  name="scheduleIds"
                   control={control}
                   render={({ field }) => (
                     <IonSelect
-                      value={field.value > 0 ? field.value : undefined}
+                      value={
+                        allowMultipleSchedules
+                          ? field.value
+                          : (field.value?.[0] ?? undefined)
+                      }
                       onIonChange={(e) => {
-                        field.onChange(Number(e.detail.value));
+                        const values = allowMultipleSchedules
+                          ? ((e.detail.value as number[]) ?? [])
+                          : e.detail.value
+                            ? [Number(e.detail.value)]
+                            : [];
+                        field.onChange(values);
                         setApiError(null);
                       }}
-                      interface="action-sheet"
-                      placeholder="Selecciona un horario"
+                      disabled={isEditMode}
+                      multiple={allowMultipleSchedules}
+                      interface="alert"
+                      placeholder={
+                        allowMultipleSchedules
+                          ? "Selecciona uno o varios horarios"
+                          : "Selecciona un horario"
+                      }
                       style={{
                         width: "100%",
                         ...inputStyle,
                         padding: "8px 14px",
                       }}
                     >
-                      {schedulesForDay.map((s) => (
+                      {availableSchedulesForDay.map((s) => (
                         <IonSelectOption key={s.id} value={s.id}>
                           {getDayName(s.dayOfWeek)} {s.startTime} - {s.endTime}{" "}
                           ({s.duration}min)
@@ -431,22 +653,46 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                   )}
                 />
               )}
-              {errors.scheduleId && (
+              {errors.scheduleIds && (
                 <IonNote
                   color="danger"
                   style={{ fontSize: "12px", marginTop: "4px" }}
                 >
-                  {errors.scheduleId.message}
+                  {errors.scheduleIds.message}
+                </IonNote>
+              )}
+
+              {!dayMismatch &&
+                selectedDate &&
+                availableSchedulesForDay.length === 0 && (
+                  <IonNote
+                    color="warning"
+                    style={{ fontSize: "12px", marginTop: "4px" }}
+                  >
+                    Todos los horarios de este dia ya estan ocupados.
+                  </IonNote>
+                )}
+
+              {isEditMode && (
+                <IonNote
+                  color="medium"
+                  style={{ fontSize: "12px", marginTop: "4px" }}
+                >
+                  El horario de una reserva agendada no se puede cambiar.
                 </IonNote>
               )}
             </div>
 
             {/* Resumen horario seleccionado */}
-            {selectedSchedule && !dayMismatch && (
+            {selectedSchedules.length > 0 && !dayMismatch && (
               <AlertCard
                 color="success"
                 icon={informationCircleOutline}
-                message={`${getDayName(selectedSchedule.dayOfWeek)} ${selectedSchedule.startTime} - ${selectedSchedule.endTime} (${selectedSchedule.duration} minutos)`}
+                message={`${selectedSchedules.length} horario(s) seleccionados: ${selectedSchedules
+                  .map(
+                    (schedule) => `${schedule.startTime}-${schedule.endTime}`,
+                  )
+                  .join(", ")}`}
                 style={{ marginBottom: "14px" }}
               />
             )}
@@ -559,6 +805,8 @@ export const BookingFormContent: React.FC<BookingFormContentProps> = ({
                   />
                   Procesando reserva...
                 </span>
+              ) : bookingToEdit ? (
+                "Guardar Cambios"
               ) : (
                 "Confirmar Reserva"
               )}

@@ -6,21 +6,26 @@ export const bookingSchema = z.object({
     .int("ID de cancha debe ser un número entero")
     .positive("Debes seleccionar una cancha"),
 
-  scheduleId: z
-    .number()
-    .int("ID de horario debe ser un número entero")
-    .positive("Debes seleccionar un horario"),
+  scheduleIds: z
+    .array(
+      z
+        .number()
+        .int("ID de horario debe ser un número entero")
+        .positive("Horario inválido"),
+    )
+    .min(1, "Debes seleccionar al menos un horario"),
 
   userId: z
     .number()
     .int("ID de usuario debe ser un número entero")
     .positive("Usuario requerido"),
 
-  date: z
-    .string()
-    .min(1, "La fecha de reserva es obligatoria"),
+  date: z.string().min(1, "La fecha de reserva es obligatoria"),
 
-  notes: z.string().max(500, "Las notas no pueden exceder 500 caracteres").optional(),
+  notes: z
+    .string()
+    .max(500, "Las notas no pueden exceder 500 caracteres")
+    .optional(),
 
   requiresReferee: z.boolean().default(false),
 

@@ -61,6 +61,7 @@ import {
 import {
   useBookingsByCourtId,
   useCreateBooking,
+  useUpdateBooking,
   useCancelBooking,
 } from "../hooks/useBookings";
 import { useProfile } from "../hooks/useRealtimeData";
@@ -79,14 +80,17 @@ import type { CourtScheduleFormData } from "../schemas/courtSchedule.schemas";
 import type { BookingFormData } from "../schemas/booking.schemas";
 import { useUserRole } from "../hooks/useUserRole";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { extractErrorMessage } from "../lib/error-utils";
+import { useUsers } from "../hooks/useUsers";
 import RoleGuard from "../components/common/RoleGuard";
 
 type ViewMode = "auth" | "public";
 
 const Courts: React.FC = () => {
   // ── RBAC ──
-  const { can, isOwnerOrAdmin } = useUserRole();
+  const { can, isOwnerOrAdmin, hasRole } = useUserRole();
   const canManageCourts = can("courts.create");
+  const canAssignBookingsToOthers = can("bookings.manage");
 
   // ── Estado ──
   const [viewMode, setViewMode] = useState<ViewMode>(
@@ -101,6 +105,7 @@ const Courts: React.FC = () => {
   );
   const [scheduleCourtId, setScheduleCourtId] = useState<number | null>(null);
   const [scheduleCourtName, setScheduleCourtName] = useState<string>("");
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [presentAlert] = useIonAlert();
 
@@ -134,6 +139,9 @@ const Courts: React.FC = () => {
   const { data: selectedCourt, isLoading: loadingDetail } = useCourt(
     selectedCourtId ?? 0,
   );
+  const { data: users = [], isLoading: loadingUsers } = useUsers(
+    canAssignBookingsToOthers,
+  );
 
   // ── Mutations ──
   const createMutation = useCreateCourt();
@@ -151,10 +159,12 @@ const Courts: React.FC = () => {
   const { data: courtBookings, isLoading: loadingBookings } =
     useBookingsByCourtId(selectedCourtId ?? undefined);
   const createBookingMutation = useCreateBooking();
+  const updateBookingMutation = useUpdateBooking();
   const cancelBookingMutation = useCancelBooking();
 
   // ── Toast ──
-  const { toast, showError, showSuccess, dismissToast } = useAppToast();
+  const { toast, showError, showSuccess, showWarning, dismissToast } =
+    useAppToast();
 
   // ── Derived ──
   const isLoading = viewMode === "auth" ? loadingCourts : loadingPublic;
@@ -344,7 +354,9 @@ const Courts: React.FC = () => {
 
   // ── Booking Handlers ──
   const canBookCourts = can("bookings.create");
-  const isBookingSubmitting = createBookingMutation.isPending;
+  const isBookingSubmitting =
+    createBookingMutation.isPending || updateBookingMutation.isPending;
+  const canSelfAssignReferee = hasRole("referee");
 
   const peopleCountBySchedule = useMemo<Record<number, number>>(() => {
     const usersBySchedule = new Map<number, Set<number>>();
@@ -367,6 +379,12 @@ const Courts: React.FC = () => {
   }, [courtBookings]);
 
   const handleBookingAdd = () => {
+    setEditingBooking(null);
+    bookingModalRef.current?.present();
+  };
+
+  const handleBookingEdit = (booking: Booking) => {
+    setEditingBooking(booking);
     bookingModalRef.current?.present();
   };
 
@@ -393,18 +411,117 @@ const Courts: React.FC = () => {
   };
 
   const handleBookingFormSubmit = async (data: BookingFormData) => {
-    try {
-      await createBookingMutation.mutateAsync({
-        courtId: data.courtId,
-        scheduleId: data.scheduleId,
-        userId: data.userId,
-        date: data.date,
-        notes: data.notes,
-        requiresReferee: data.requiresReferee,
-        refereeId: data.refereeId,
-      });
-      showSuccess("Reserva creada correctamente");
+    if (editingBooking) {
+      const scheduleId = data.scheduleIds?.[0];
+
+      if (!scheduleId) {
+        throw new Error("Debes seleccionar un horario para editar la reserva");
+      }
+
+      try {
+        await updateBookingMutation.mutateAsync({
+          id: editingBooking.id,
+          data: {
+            courtId: data.courtId,
+            scheduleId,
+            userId: data.userId,
+            date: data.date,
+            notes: data.notes,
+            requiresReferee: data.requiresReferee,
+            refereeId: data.refereeId,
+          },
+        });
+        showSuccess("Reserva actualizada correctamente");
+        setEditingBooking(null);
+        bookingModalRef.current?.dismiss();
+        return;
+      } catch (error) {
+        showError(error);
+        throw error;
+      }
+    }
+
+    const uniqueScheduleIds = Array.from(new Set(data.scheduleIds));
+    const failedReservations: string[] = [];
+    let createdCount = 0;
+
+    for (const scheduleId of uniqueScheduleIds) {
+      try {
+        await createBookingMutation.mutateAsync({
+          courtId: data.courtId,
+          scheduleId,
+          userId: data.userId,
+          date: data.date,
+          notes: data.notes,
+          requiresReferee: data.requiresReferee,
+          refereeId: data.refereeId,
+        });
+        createdCount += 1;
+      } catch (error) {
+        const schedule = (courtSchedules ?? []).find(
+          (item) => item.id === scheduleId,
+        );
+        const scheduleLabel = schedule
+          ? `${schedule.startTime}-${schedule.endTime}`
+          : `horario #${scheduleId}`;
+        failedReservations.push(
+          `${scheduleLabel}: ${extractErrorMessage(error, "No disponible")}`,
+        );
+      }
+    }
+
+    if (failedReservations.length === 0) {
+      const message =
+        createdCount === 1
+          ? "Reserva creada correctamente"
+          : `${createdCount} reservas creadas correctamente`;
+      showSuccess(message);
       bookingModalRef.current?.dismiss();
+      return;
+    }
+
+    if (createdCount > 0) {
+      showWarning(
+        `Se reservaron ${createdCount} de ${uniqueScheduleIds.length} horarios seleccionados`,
+      );
+      throw new Error(
+        `No se pudieron reservar algunos horarios: ${failedReservations.join(" | ")}`,
+      );
+    }
+
+    throw new Error(failedReservations.join(" | "));
+  };
+
+  const handleAssignReferee = async (booking: Booking) => {
+    if (!userId) {
+      showError("No se pudo validar la sesion para asignar arbitro");
+      return;
+    }
+
+    if (!canSelfAssignReferee) {
+      showError("Solo usuarios con rol arbitro pueden asignarse");
+      return;
+    }
+
+    if (!booking.requiresReferee) {
+      showError("Esta reserva no requiere arbitro");
+      return;
+    }
+
+    if (booking.refereeId) {
+      showError("Esta reserva ya tiene arbitro asignado");
+      return;
+    }
+
+    try {
+      await updateBookingMutation.mutateAsync({
+        id: booking.id,
+        data: {
+          requiresReferee: true,
+          refereeId: userId,
+        },
+      });
+      showSuccess("Te asignaste como arbitro en la reserva");
     } catch (error) {
       showError(error);
     }
@@ -828,10 +945,13 @@ const Courts: React.FC = () => {
                 bookings={courtBookings ?? []}
                 isLoading={loadingBookings}
                 canBook={canBookCourts && selectedCourt.active}
+                canAssignReferee={canSelfAssignReferee}
                 currentUserId={userId}
                 isOwner={isOwnerOrAdmin(selectedCourt.userId)}
                 onBook={handleBookingAdd}
+                onEdit={handleBookingEdit}
                 onCancel={handleBookingCancel}
+                onAssignReferee={handleAssignReferee}
               />
             </>
           )}
@@ -883,7 +1003,12 @@ const Courts: React.FC = () => {
       </IonModal>
 
       {/* ── Modal Reserva (crear) ── */}
-      <IonModal ref={bookingModalRef}>
+      <IonModal
+        ref={bookingModalRef}
+        onDidDismiss={() => {
+          setEditingBooking(null);
+        }}
+      >
         {selectedCourtId && selectedCourt && (
           <BookingFormContent
             onDismiss={() => bookingModalRef.current?.dismiss()}
@@ -892,6 +1017,12 @@ const Courts: React.FC = () => {
             courtName={selectedCourt.name}
             userId={userId}
             schedules={courtSchedules ?? []}
+            bookings={courtBookings ?? []}
+            users={users}
+            canAssignUser={canAssignBookingsToOthers}
+            isUsersLoading={loadingUsers}
+            bookingToEdit={editingBooking}
+            allowMultipleSchedules={!editingBooking}
             isSubmitting={isBookingSubmitting}
           />
         )}

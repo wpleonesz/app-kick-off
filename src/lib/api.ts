@@ -86,6 +86,26 @@ function buildUrl(endpoint: string): string {
   return `${baseUrl}${path}`;
 }
 
+function extractHttpErrorMessage(data: any, status: number): string {
+  if (!data) return `Error ${status}`;
+
+  if (typeof data === "string") {
+    const text = data.trim();
+    if (!text) return `Error ${status}`;
+
+    try {
+      const parsed = JSON.parse(text);
+      return parsed?.message || parsed?.error || parsed?.data?.message || text;
+    } catch {
+      return text;
+    }
+  }
+
+  return (
+    data?.message || data?.error || data?.data?.message || `Error ${status}`
+  );
+}
+
 /**
  * Maneja la respuesta HTTP y errores comunes
  */
@@ -149,10 +169,10 @@ async function handleResponse<T = any>(
 
   // Error del cliente (4XX)
   if (response.status >= 400 && response.status < 500) {
-    const errorMessage =
-      response.data?.message ||
-      response.data?.error ||
-      `Error ${response.status}`;
+    const errorMessage = extractHttpErrorMessage(
+      response.data,
+      response.status,
+    );
     throw new Error(errorMessage);
   }
 

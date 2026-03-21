@@ -14,14 +14,15 @@ import {
 } from "@ionic/react";
 import {
   trashOutline,
+  createOutline,
   addCircleOutline,
   calendarOutline,
   timeOutline,
   personOutline,
+  shieldCheckmarkOutline,
 } from "ionicons/icons";
 import type { Booking } from "../../interfaces";
 import { BOOKING_STATUS, getBookingStatusColor } from "../../interfaces";
-import { getDayName } from "../../interfaces/courtSchedule";
 
 function normalizeToUtcDay(value: string): Date {
   const parsed = new Date(value);
@@ -46,8 +47,11 @@ export interface BookingListCardProps {
   canBook?: boolean;
   currentUserId?: number;
   isOwner?: boolean;
+  canAssignReferee?: boolean;
   onBook?: () => void;
   onCancel?: (booking: Booking) => void;
+  onEdit?: (booking: Booking) => void;
+  onAssignReferee?: (booking: Booking) => void;
 }
 
 export const BookingListCard: React.FC<BookingListCardProps> = ({
@@ -57,8 +61,11 @@ export const BookingListCard: React.FC<BookingListCardProps> = ({
   canBook = false,
   currentUserId,
   isOwner = false,
+  canAssignReferee = false,
   onBook,
   onCancel,
+  onEdit,
+  onAssignReferee,
 }) => {
   if (isLoading) {
     return (
@@ -171,7 +178,14 @@ export const BookingListCard: React.FC<BookingListCardProps> = ({
                   isOwner ||
                   (currentUserId != null && b.userId === currentUserId)
                 }
+                canEdit={
+                  isOwner ||
+                  (currentUserId != null && b.userId === currentUserId)
+                }
+                canAssignReferee={canAssignReferee}
                 onCancel={onCancel}
+                onEdit={onEdit}
+                onAssignReferee={onAssignReferee}
               />
             ))}
           </div>
@@ -186,13 +200,21 @@ export const BookingListCard: React.FC<BookingListCardProps> = ({
 interface BookingRowProps {
   booking: Booking;
   canCancel: boolean;
+  canEdit: boolean;
+  canAssignReferee: boolean;
   onCancel?: (b: Booking) => void;
+  onEdit?: (b: Booking) => void;
+  onAssignReferee?: (b: Booking) => void;
 }
 
 const BookingRow: React.FC<BookingRowProps> = ({
   booking,
   canCancel,
+  canEdit,
+  canAssignReferee,
   onCancel,
+  onEdit,
+  onAssignReferee,
 }) => {
   const dateStr = normalizeToUtcDay(booking.date).toLocaleDateString("es-EC", {
     weekday: "short",
@@ -280,6 +302,21 @@ const BookingRow: React.FC<BookingRowProps> = ({
               {booking.user.username}
             </span>
           )}
+
+          {booking.requiresReferee && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <IonIcon icon={shieldCheckmarkOutline} color="medium" />
+              {booking.referee?.username
+                ? `Arbitro: @${booking.referee.username}`
+                : "Arbitro: pendiente"}
+            </span>
+          )}
         </div>
 
         {booking.notes && (
@@ -296,6 +333,19 @@ const BookingRow: React.FC<BookingRowProps> = ({
         )}
       </div>
 
+      {canEdit && booking.status !== "cancelled" && onEdit && (
+        <div style={{ flexShrink: 0 }}>
+          <IonButton
+            fill="clear"
+            size="small"
+            color="primary"
+            onClick={() => onEdit(booking)}
+          >
+            <IonIcon icon={createOutline} slot="icon-only" />
+          </IonButton>
+        </div>
+      )}
+
       {canCancel && booking.status !== "cancelled" && onCancel && (
         <div style={{ flexShrink: 0 }}>
           <IonButton
@@ -308,6 +358,25 @@ const BookingRow: React.FC<BookingRowProps> = ({
           </IonButton>
         </div>
       )}
+
+      {canAssignReferee &&
+        booking.active &&
+        booking.status !== "cancelled" &&
+        booking.requiresReferee &&
+        !booking.refereeId &&
+        onAssignReferee && (
+          <div style={{ flexShrink: 0 }}>
+            <IonButton
+              fill="outline"
+              size="small"
+              color="secondary"
+              onClick={() => onAssignReferee(booking)}
+            >
+              <IonIcon icon={shieldCheckmarkOutline} slot="start" />
+              Asignarme
+            </IonButton>
+          </div>
+        )}
     </div>
   );
 };
